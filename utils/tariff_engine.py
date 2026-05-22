@@ -1,111 +1,79 @@
-def calculate_bill_estimation(units):
+def estimate_without_solar_bill(data):
 
     result = {}
 
     try:
 
-        units = float(units)
+        import_units = data.get(
+            "Import Units",
+            0
+        )
 
-        # ---------------------------------
-        # ENERGY CHARGES
-        # ---------------------------------
+        solar_generation = data.get(
+            "Solar Generation",
+            0
+        )
 
-        energy_rate = 8.50
+        total_units = (
+            import_units
+            + solar_generation
+        )
 
-        energy_charges = (
-            units * energy_rate
+        multiplier = (
+            total_units
+            / import_units
         )
 
         # ---------------------------------
-        # FAC CHARGES
+        # SCALE ALL CHARGES
         # ---------------------------------
 
-        fac_rate = 1.00
+        charge_list = [
 
-        fac_charges = (
-            units * fac_rate
+            "Demand Charges",
+            "Wheeling Charges",
+            "Energy Charges",
+            "TOD Charges",
+            "FAC Charges",
+            "Electricity Duty",
+            "Tax on Sale",
+            "Grid Support Charge"
+
+        ]
+
+        total_bill = 0
+
+        for charge in charge_list:
+
+            current_value = data.get(
+                charge,
+                0
+            )
+
+            estimated_value = (
+                current_value
+                * multiplier
+            )
+
+            result[charge] = round(
+                estimated_value,
+                2
+            )
+
+            total_bill += estimated_value
+
+        result["Without Solar Units"] = (
+            round(total_units, 2)
         )
 
-        # ---------------------------------
-        # WHEELING CHARGES
-        # ---------------------------------
-
-        wheeling_rate = 0.75
-
-        wheeling_charges = (
-            units * wheeling_rate
-        )
-
-        # ---------------------------------
-        # ELECTRICITY DUTY
-        # ---------------------------------
-
-        duty_rate = 0.075
-
-        electricity_duty = (
-            energy_charges * duty_rate
-        )
-
-        # ---------------------------------
-        # FIXED CHARGES
-        # ---------------------------------
-
-        fixed_charges = 5000
-
-        # ---------------------------------
-        # TOTAL BILL
-        # ---------------------------------
-
-        total_bill = (
-
-            energy_charges
-            + fac_charges
-            + wheeling_charges
-            + electricity_duty
-            + fixed_charges
-
-        )
-
-        # ---------------------------------
-        # STORE RESULTS
-        # ---------------------------------
-
-        result["Units"] = round(units, 2)
-
-        result["Energy Charges"] = round(
-            energy_charges,
-            2
-        )
-
-        result["FAC Charges"] = round(
-            fac_charges,
-            2
-        )
-
-        result["Wheeling Charges"] = round(
-            wheeling_charges,
-            2
-        )
-
-        result["Electricity Duty"] = round(
-            electricity_duty,
-            2
-        )
-
-        result["Fixed Charges"] = round(
-            fixed_charges,
-            2
-        )
-
-        result["Estimated Bill"] = round(
-            total_bill,
-            2
+        result["Estimated Bill Without Solar"] = (
+            round(total_bill, 2)
         )
 
     except:
 
         result["Error"] = (
-            "Tariff Calculation Error"
+            "Estimation Error"
         )
 
     return result
