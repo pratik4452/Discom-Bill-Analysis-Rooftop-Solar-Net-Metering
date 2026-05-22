@@ -8,10 +8,6 @@ def calculate_bill_estimation(
 
     try:
 
-        # ---------------------------------
-        # CLEAN VALUES
-        # ---------------------------------
-
         with_solar_bill = float(
             str(with_solar_bill)
             .replace(",", "")
@@ -21,28 +17,15 @@ def calculate_bill_estimation(
             without_solar_units
         )
 
-        solar_generation = float(
-            solar_generation
-        )
-
-        # ---------------------------------
-        # ASSUMED RATES
-        # ---------------------------------
-
         energy_rate = 8.95
-
         wheeling_rate = 0.81
-
         fac_rate = 0.50
-
         duty_percent = 0.09
-
-        grid_support_rate = 1.42
 
         demand_charges = 202150
 
         # ---------------------------------
-        # WITHOUT SOLAR CALCULATION
+        # CALCULATIONS
         # ---------------------------------
 
         energy_charges = (
@@ -65,7 +48,6 @@ def calculate_bill_estimation(
             * duty_percent
         )
 
-        # No grid support without solar
         grid_support_charges = 0
 
         total_without_solar = (
@@ -75,13 +57,8 @@ def calculate_bill_estimation(
             + wheeling_charges
             + fac_charges
             + electricity_duty
-            + grid_support_charges
 
         )
-
-        # ---------------------------------
-        # SAVINGS
-        # ---------------------------------
 
         estimated_savings = (
             total_without_solar
@@ -89,7 +66,7 @@ def calculate_bill_estimation(
         )
 
         # ---------------------------------
-        # STORE RESULTS
+        # RESULTS
         # ---------------------------------
 
         result["Demand Charges"] = round(
