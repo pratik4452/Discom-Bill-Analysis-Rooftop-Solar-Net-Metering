@@ -4,19 +4,53 @@ def calculate_without_solar(data):
 
     try:
 
+        # ---------------------------------
+        # SAFE VALUE CONVERSION
+        # ---------------------------------
+
         import_units = int(
-            str(data.get("Import Units", 0))
+
+            str(
+                data.get(
+                    "Import Units",
+                    0
+                )
+            )
+
             .replace(",", "")
+            .strip()
+
+            or 0
         )
 
         solar_generation = int(
-            str(data.get("Solar Generation", 0))
+
+            str(
+                data.get(
+                    "Solar Generation",
+                    0
+                )
+            )
+
             .replace(",", "")
+            .strip()
+
+            or 0
         )
 
         export_units = int(
-            str(data.get("Export Units", 0))
+
+            str(
+                data.get(
+                    "Export Units",
+                    0
+                )
+            )
+
             .replace(",", "")
+            .strip()
+
+            or 0
         )
 
         # ---------------------------------
@@ -24,7 +58,8 @@ def calculate_without_solar(data):
         # ---------------------------------
 
         total_consumption = (
-            import_units + solar_generation
+            import_units
+            + solar_generation
         )
 
         # ---------------------------------
@@ -32,19 +67,29 @@ def calculate_without_solar(data):
         # ---------------------------------
 
         self_consumption = (
-            solar_generation - export_units
+            solar_generation
+            - export_units
+        )
+
+        # ---------------------------------
+        # SOLAR OFFSET
+        # ---------------------------------
+
+        solar_offset = (
+            self_consumption
+            + export_units
         )
 
         result["Import Units"] = (
             import_units
         )
 
-        result["Export Units"] = (
-            export_units
-        )
-
         result["Solar Generation"] = (
             solar_generation
+        )
+
+        result["Export Units"] = (
+            export_units
         )
 
         result["Self Consumption"] = (
@@ -55,10 +100,12 @@ def calculate_without_solar(data):
             total_consumption
         )
 
-    except:
-
-        result["Error"] = (
-            "Calculation Error"
+        result["Solar Offset Units"] = (
+            solar_offset
         )
+
+    except Exception as e:
+
+        result["Error"] = str(e)
 
     return result
