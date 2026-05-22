@@ -5,12 +5,8 @@ from utils.pdf_parser import (
     extract_bill_data
 )
 
-from utils.solar_calculator import (
-    calculate_solar_analysis
-)
-
 from utils.tariff_engine import (
-    estimate_without_solar_bill
+    calculate_before_after_solar
 )
 
 # -----------------------------------
@@ -29,11 +25,11 @@ st.set_page_config(
 # -----------------------------------
 
 st.title(
-    "⚡ DISCOM Bill Analysis"
+    "⚡ DISCOM Solar Bill Intelligence"
 )
 
 st.markdown(
-    "### Rooftop Solar Net Metering Intelligence"
+    "### Before Solar vs After Solar Analysis"
 )
 
 # -----------------------------------
@@ -54,7 +50,7 @@ uploaded_file = st.file_uploader(
 if uploaded_file:
 
     # -----------------------------------
-    # EXTRACT BILL DATA
+    # EXTRACT DATA
     # -----------------------------------
 
     data = extract_bill_data(
@@ -62,25 +58,12 @@ if uploaded_file:
     )
 
     # -----------------------------------
-    # SOLAR ANALYSIS
+    # CALCULATE
     # -----------------------------------
 
-    solar_analysis = (
-        calculate_solar_analysis(
+    analysis = (
+        calculate_before_after_solar(
             data
-        )
-    )
-
-    # -----------------------------------
-    # BILL ESTIMATION
-    # -----------------------------------
-
-    estimated_bill = (
-        estimate_without_solar_bill(
-
-            data,
-            solar_analysis
-
         )
     )
 
@@ -92,21 +75,18 @@ if uploaded_file:
         "Financial Summary"
     )
 
-    current_bill = data.get(
-        "Current Bill",
-        0
+    after_bill = (
+        analysis["Total Bill"]
+        ["After Solar"]
     )
 
-    without_solar_bill = (
-        estimated_bill.get(
-            "Estimated Bill",
-            0
-        )
+    before_bill = (
+        analysis["Total Bill"]
+        ["Before Solar"]
     )
 
     savings = (
-        without_solar_bill
-        - current_bill
+        analysis["Savings"]
     )
 
     col1, col2, col3 = (
@@ -115,17 +95,17 @@ if uploaded_file:
 
     col1.metric(
 
-        "Current Bill",
+        "After Solar Bill",
 
-        f"₹ {current_bill:,.0f}"
+        f"₹ {after_bill:,.0f}"
 
     )
 
     col2.metric(
 
-        "Without Solar Bill",
+        "Before Solar Bill",
 
-        f"₹ {without_solar_bill:,.0f}"
+        f"₹ {before_bill:,.0f}"
 
     )
 
@@ -173,24 +153,24 @@ if uploaded_file:
 
     col6.metric(
 
-        "Self Consumption",
+        "Before Solar Units",
 
-        solar_analysis.get(
-            "Self Consumption",
+        analysis.get(
+            "Before Solar Units",
             0
         )
 
     )
 
     # -----------------------------------
-    # SIDE BY SIDE COMPARISON
+    # SIDE-BY-SIDE TABLE
     # -----------------------------------
 
     st.subheader(
-        "Charge Comparison"
+        "Before Solar vs After Solar"
     )
 
-    comparison_data = []
+    table_data = []
 
     charges = [
 
@@ -207,24 +187,24 @@ if uploaded_file:
 
     for charge in charges:
 
-        comparison_data.append({
+        table_data.append({
 
             "Charge": charge,
 
-            "Current Bill": data.get(
-                charge,
-                0
-            ),
+            "After Solar":
 
-            "Without Solar": estimated_bill.get(
-                charge,
-                0
-            )
+                analysis[charge]
+                ["After Solar"],
+
+            "Before Solar":
+
+                analysis[charge]
+                ["Before Solar"]
 
         })
 
     comparison_df = pd.DataFrame(
-        comparison_data
+        table_data
     )
 
     st.dataframe(
@@ -235,7 +215,7 @@ if uploaded_file:
     )
 
     # -----------------------------------
-    # RAW DATA
+    # RAW EXTRACTED DATA
     # -----------------------------------
 
     st.subheader(
