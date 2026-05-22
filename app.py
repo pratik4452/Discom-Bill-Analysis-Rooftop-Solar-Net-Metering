@@ -20,9 +20,9 @@ from utils.charts import (
 
 )
 
-# -------------------------------------
+# ---------------------------------------------------
 # PAGE CONFIG
-# -------------------------------------
+# ---------------------------------------------------
 
 st.set_page_config(
 
@@ -31,9 +31,9 @@ st.set_page_config(
 
 )
 
-# -------------------------------------
+# ---------------------------------------------------
 # TITLE
-# -------------------------------------
+# ---------------------------------------------------
 
 st.title(
     "⚡ DISCOM Bill Analysis Dashboard"
@@ -43,9 +43,9 @@ st.markdown(
     "### AI-Based Rooftop Solar Savings Intelligence"
 )
 
-# -------------------------------------
+# ---------------------------------------------------
 # FILE UPLOAD
-# -------------------------------------
+# ---------------------------------------------------
 
 uploaded_file = st.file_uploader(
 
@@ -54,23 +54,23 @@ uploaded_file = st.file_uploader(
 
 )
 
-# -------------------------------------
+# ---------------------------------------------------
 # PROCESS FILE
-# -------------------------------------
+# ---------------------------------------------------
 
 if uploaded_file:
 
-    # ---------------------------------
-    # EXTRACT DATA
-    # ---------------------------------
+    # ---------------------------------------------------
+    # EXTRACT BILL DATA
+    # ---------------------------------------------------
 
     bill_data = extract_bill_data(
         uploaded_file
     )
 
-    # ---------------------------------
+    # ---------------------------------------------------
     # SOLAR CALCULATIONS
-    # ---------------------------------
+    # ---------------------------------------------------
 
     solar_results = (
         calculate_without_solar(
@@ -78,59 +78,47 @@ if uploaded_file:
         )
     )
 
-    # ---------------------------------
-    # ESTIMATED BILL
-    # ---------------------------------
-
-    without_solar_units = (
-        solar_results.get(
-            "Without Solar Units",
-            0
-        )
-    )
+    # ---------------------------------------------------
+    # BILL ESTIMATION
+    # ---------------------------------------------------
 
     estimated_bill = (
         calculate_bill_estimation(
-            without_solar_units
+            solar_results,
+            bill_data
         )
     )
 
-    current_bill = (
-        bill_data.get(
-            "Bill Amount",
-            0
-        )
-    )
-
-    estimated_total = (
-        estimated_bill.get(
-            "Estimated Bill",
-            0
-        )
-    )
-
-    # ---------------------------------
-    # CLEAN VALUES
-    # ---------------------------------
+    # ---------------------------------------------------
+    # TOTALS
+    # ---------------------------------------------------
 
     try:
 
-        current_bill = float(
-            str(current_bill)
-            .replace(",", "")
+        with_solar_bill = (
+            estimated_bill["TOTAL BILL"]
+            ["With Solar"]
+        )
+
+        without_solar_bill = (
+            estimated_bill["TOTAL BILL"]
+            ["Without Solar"]
+        )
+
+        savings = (
+            without_solar_bill
+            - with_solar_bill
         )
 
     except:
 
-        current_bill = 0
+        with_solar_bill = 0
+        without_solar_bill = 0
+        savings = 0
 
-    savings = (
-        estimated_total - current_bill
-    )
-
-    # ---------------------------------
+    # ---------------------------------------------------
     # KPI CARDS
-    # ---------------------------------
+    # ---------------------------------------------------
 
     st.subheader(
         "Key Financial Insights"
@@ -143,14 +131,14 @@ if uploaded_file:
     col1.metric(
 
         "Current Bill",
-        f"₹ {current_bill:,.0f}"
+        f"₹ {with_solar_bill:,.0f}"
 
     )
 
     col2.metric(
 
         "Without Solar Bill",
-        f"₹ {estimated_total:,.0f}"
+        f"₹ {without_solar_bill:,.0f}"
 
     )
 
@@ -161,9 +149,9 @@ if uploaded_file:
 
     )
 
-    # ---------------------------------
+    # ---------------------------------------------------
     # ENERGY KPI
-    # ---------------------------------
+    # ---------------------------------------------------
 
     st.subheader(
         "Energy Analytics"
@@ -206,9 +194,9 @@ if uploaded_file:
 
     )
 
-    # ---------------------------------
+    # ---------------------------------------------------
     # CHARTS
-    # ---------------------------------
+    # ---------------------------------------------------
 
     st.subheader(
         "Visual Analytics"
@@ -248,8 +236,8 @@ if uploaded_file:
     bar_chart = (
         create_bill_comparison_chart(
 
-            current_bill,
-            estimated_total
+            with_solar_bill,
+            without_solar_bill
 
         )
     )
@@ -270,9 +258,55 @@ if uploaded_file:
             use_container_width=True
         )
 
-    # ---------------------------------
+    # ---------------------------------------------------
+    # SIDE-BY-SIDE BILL COMPARISON
+    # ---------------------------------------------------
+
+    st.subheader(
+        "With Solar vs Without Solar"
+    )
+
+    comparison_rows = []
+
+    for charge, values in (
+        estimated_bill.items()
+    ):
+
+        if isinstance(values, dict):
+
+            comparison_rows.append({
+
+                "Charges": charge,
+
+                "With Solar":
+                values.get(
+                    "With Solar",
+                    "-"
+                ),
+
+                "Without Solar":
+                values.get(
+                    "Without Solar",
+                    "-"
+                )
+
+            })
+
+    comparison_df = pd.DataFrame(
+        comparison_rows
+    )
+
+    st.dataframe(
+
+        comparison_df,
+
+        use_container_width=True
+
+    )
+
+    # ---------------------------------------------------
     # RAW DATA TABLES
-    # ---------------------------------
+    # ---------------------------------------------------
 
     st.subheader(
         "Extracted Bill Details"
@@ -303,21 +337,5 @@ if uploaded_file:
 
     st.dataframe(
         solar_df,
-        use_container_width=True
-    )
-
-    st.subheader(
-        "Estimated Bill Details"
-    )
-
-    estimated_df = pd.DataFrame(
-
-        estimated_bill.items(),
-        columns=["Parameter", "Value"]
-
-    )
-
-    st.dataframe(
-        estimated_df,
         use_container_width=True
     )
