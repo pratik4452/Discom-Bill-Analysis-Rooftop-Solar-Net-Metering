@@ -2,20 +2,7 @@ def calculate_without_solar(data):
 
     result = {}
 
-    solar_generation = data.get(
-        "Solar Generation",
-        0
-    )
-
-    # -----------------------------------
-    # MULTIPLIER LOGIC
-    # -----------------------------------
-
-    multiplier = 1.65
-
-    # -----------------------------------
-    # RECONSTRUCT WITHOUT SOLAR
-    # -----------------------------------
+    multiplier = 1.60
 
     result["Demand Charges"] = (
         data.get("Demand Charges", 0)
@@ -61,10 +48,6 @@ def calculate_without_solar(data):
         data.get("Debit Bill Adjustment", 0)
     )
 
-    # -----------------------------------
-    # TOTAL
-    # -----------------------------------
-
     total = (
 
         result["Demand Charges"]
@@ -80,9 +63,5 @@ def calculate_without_solar(data):
     )
 
     result["Without Solar Bill"] = total
-
-    result["Solar Generation"] = (
-        solar_generation
-    )
 
     return result
