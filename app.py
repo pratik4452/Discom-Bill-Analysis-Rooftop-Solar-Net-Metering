@@ -20,9 +20,9 @@ from utils.charts import (
 
 )
 
-# -----------------------------------
+# -------------------------------------
 # PAGE CONFIG
-# -----------------------------------
+# -------------------------------------
 
 st.set_page_config(
 
@@ -31,9 +31,9 @@ st.set_page_config(
 
 )
 
-# -----------------------------------
+# -------------------------------------
 # TITLE
-# -----------------------------------
+# -------------------------------------
 
 st.title(
     "⚡ DISCOM Bill Analysis Dashboard"
@@ -43,9 +43,9 @@ st.markdown(
     "### AI-Based Rooftop Solar Savings Intelligence"
 )
 
-# -----------------------------------
+# -------------------------------------
 # FILE UPLOAD
-# -----------------------------------
+# -------------------------------------
 
 uploaded_file = st.file_uploader(
 
@@ -54,15 +54,23 @@ uploaded_file = st.file_uploader(
 
 )
 
-# -----------------------------------
+# -------------------------------------
 # PROCESS FILE
-# -----------------------------------
+# -------------------------------------
 
 if uploaded_file:
+
+    # ---------------------------------
+    # EXTRACT DATA
+    # ---------------------------------
 
     bill_data = extract_bill_data(
         uploaded_file
     )
+
+    # ---------------------------------
+    # SOLAR CALCULATIONS
+    # ---------------------------------
 
     solar_results = (
         calculate_without_solar(
@@ -70,16 +78,9 @@ if uploaded_file:
         )
     )
 
-    # -----------------------------------
-    # FINANCIAL SUMMARY
-    # -----------------------------------
-
-    current_bill = (
-        bill_data.get(
-            "Bill Amount",
-            0
-        )
-    )
+    # ---------------------------------
+    # ESTIMATED BILL
+    # ---------------------------------
 
     without_solar_units = (
         solar_results.get(
@@ -94,6 +95,13 @@ if uploaded_file:
         )
     )
 
+    current_bill = (
+        bill_data.get(
+            "Bill Amount",
+            0
+        )
+    )
+
     estimated_total = (
         estimated_bill.get(
             "Estimated Bill",
@@ -101,197 +109,138 @@ if uploaded_file:
         )
     )
 
+    # ---------------------------------
+    # CLEAN VALUES
+    # ---------------------------------
+
+    try:
+
+        current_bill = float(
+            str(current_bill)
+            .replace(",", "")
+        )
+
+    except:
+
+        current_bill = 0
+
     savings = (
-        estimated_total
-        - current_bill
+        estimated_total - current_bill
     )
 
-    # -----------------------------------
-    # KPI
-    # -----------------------------------
+    # ---------------------------------
+    # KPI CARDS
+    # ---------------------------------
 
     st.subheader(
-        "Financial Summary"
+        "Key Financial Insights"
     )
 
-    c1, c2, c3 = st.columns(3)
+    col1, col2, col3 = (
+        st.columns(3)
+    )
 
-    c1.metric(
+    col1.metric(
+
         "Current Bill",
         f"₹ {current_bill:,.0f}"
+
     )
 
-    c2.metric(
+    col2.metric(
+
         "Without Solar Bill",
         f"₹ {estimated_total:,.0f}"
+
     )
 
-    c3.metric(
+    col3.metric(
+
         "Estimated Savings",
         f"₹ {savings:,.0f}"
+
     )
 
-    # -----------------------------------
-    # CHARGE BREAKDOWN
-    # -----------------------------------
+    # ---------------------------------
+    # ENERGY KPI
+    # ---------------------------------
 
     st.subheader(
-        "Tariff Breakdown"
+        "Energy Analytics"
     )
 
-    debit_data = {
+    col4, col5, col6 = (
+        st.columns(3)
+    )
 
-        "Parameter": [
+    col4.metric(
 
-            "Demand Charges",
-            "Wheeling Charges",
-            "Energy Charges",
-            "TOD Tariff EC",
-            "FAC Charges",
-            "Electricity Duty",
-            "Tax on Sale",
-            "Grid Support Charge",
-            "Debit Bill Adjustment"
+        "Import Units",
 
-        ],
-
-        "Amount": [
-
-            bill_data.get(
-                "Demand Charges",
-                0
-            ),
-
-            bill_data.get(
-                "Wheeling Charges",
-                0
-            ),
-
-            bill_data.get(
-                "Energy Charges",
-                0
-            ),
-
-            bill_data.get(
-                "TOD Tariff EC",
-                0
-            ),
-
-            bill_data.get(
-                "FAC Charges",
-                0
-            ),
-
-            bill_data.get(
-                "Electricity Duty",
-                0
-            ),
-
-            bill_data.get(
-                "Tax on Sale",
-                0
-            ),
-
-            bill_data.get(
-                "Grid Support Charge",
-                0
-            ),
-
-            bill_data.get(
-                "Debit Bill Adjustment",
-                0
-            )
-
-        ]
-
-    }
-
-    credit_data = {
-
-        "Parameter": [
-
-            "Prompt Payment Discount",
-            "Load Factor Incentive",
-            "Incremental Rebate",
-            "Bulk Consumption Rebate"
-
-        ],
-
-        "Amount": [
-
-            bill_data.get(
-                "Prompt Payment Discount",
-                0
-            ),
-
-            bill_data.get(
-                "Load Factor Incentive",
-                0
-            ),
-
-            bill_data.get(
-                "Incremental Rebate",
-                0
-            ),
-
-            bill_data.get(
-                "Bulk Consumption Rebate",
-                0
-            )
-
-        ]
-
-    }
-
-    d1, d2 = st.columns(2)
-
-    with d1:
-
-        st.markdown(
-            "### Debit Charges"
+        solar_results.get(
+            "Import Units",
+            0
         )
 
-        st.dataframe(
-            pd.DataFrame(debit_data),
-            use_container_width=True
+    )
+
+    col5.metric(
+
+        "Solar Generation",
+
+        solar_results.get(
+            "Solar Generation",
+            0
         )
 
-    with d2:
+    )
 
-        st.markdown(
-            "### Credit Adjustments"
+    col6.metric(
+
+        "Self Consumption",
+
+        solar_results.get(
+            "Self Consumption",
+            0
         )
 
-        st.dataframe(
-            pd.DataFrame(credit_data),
-            use_container_width=True
-        )
+    )
 
-    # -----------------------------------
+    # ---------------------------------
     # CHARTS
-    # -----------------------------------
+    # ---------------------------------
 
     st.subheader(
         "Visual Analytics"
     )
 
+    import_units = (
+        solar_results.get(
+            "Import Units",
+            0
+        )
+    )
+
+    solar_generation = (
+        solar_results.get(
+            "Solar Generation",
+            0
+        )
+    )
+
+    export_units = (
+        solar_results.get(
+            "Export Units",
+            0
+        )
+    )
+
     pie_chart = (
         create_energy_pie_chart(
 
-            solar_results.get(
-                "Import Units",
-                0
-            ),
-
-            solar_results.get(
-                "Solar Generation",
-                0
-            ),
-
-            solar_results.get(
-                "Export Units",
-                0
-            )
+            import_units,
+            solar_generation,
+            export_units
 
         )
     )
@@ -305,18 +254,70 @@ if uploaded_file:
         )
     )
 
-    p1, p2 = st.columns(2)
+    col7, col8 = st.columns(2)
 
-    with p1:
+    with col7:
 
         st.plotly_chart(
             pie_chart,
             use_container_width=True
         )
 
-    with p2:
+    with col8:
 
         st.plotly_chart(
             bar_chart,
             use_container_width=True
         )
+
+    # ---------------------------------
+    # RAW DATA TABLES
+    # ---------------------------------
+
+    st.subheader(
+        "Extracted Bill Details"
+    )
+
+    bill_df = pd.DataFrame(
+
+        bill_data.items(),
+        columns=["Parameter", "Value"]
+
+    )
+
+    st.dataframe(
+        bill_df,
+        use_container_width=True
+    )
+
+    st.subheader(
+        "Solar Calculation Details"
+    )
+
+    solar_df = pd.DataFrame(
+
+        solar_results.items(),
+        columns=["Parameter", "Value"]
+
+    )
+
+    st.dataframe(
+        solar_df,
+        use_container_width=True
+    )
+
+    st.subheader(
+        "Estimated Bill Details"
+    )
+
+    estimated_df = pd.DataFrame(
+
+        estimated_bill.items(),
+        columns=["Parameter", "Value"]
+
+    )
+
+    st.dataframe(
+        estimated_df,
+        use_container_width=True
+    )
