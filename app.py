@@ -33,7 +33,7 @@ st.title(
 )
 
 st.markdown(
-    "### Rooftop Solar Savings Analysis"
+    "### Rooftop Solar With vs Without Analysis"
 )
 
 # -----------------------------------
@@ -42,13 +42,13 @@ st.markdown(
 
 uploaded_file = st.file_uploader(
 
-    "Upload MSEDCL Solar Bill PDF",
+    "Upload MSEDCL Solar Bill",
     type=["pdf"]
 
 )
 
 # -----------------------------------
-# PROCESS BILL
+# PROCESS FILE
 # -----------------------------------
 
 if uploaded_file:
@@ -64,7 +64,7 @@ if uploaded_file:
     )
 
     # -----------------------------------
-    # SUMMARY
+    # KPI
     # -----------------------------------
 
     current_bill = bill_data.get(
@@ -72,19 +72,17 @@ if uploaded_file:
         0
     )
 
-    estimated_bill = without_solar.get(
-        "Without Solar Bill",
-        0
+    without_solar_bill = (
+        without_solar.get(
+            "Without Solar Bill",
+            0
+        )
     )
 
     savings = (
-        estimated_bill
+        without_solar_bill
         - current_bill
     )
-
-    # -----------------------------------
-    # KPI
-    # -----------------------------------
 
     st.subheader(
         "Financial Summary"
@@ -99,7 +97,7 @@ if uploaded_file:
 
     c2.metric(
         "Without Solar Bill",
-        f"₹ {estimated_bill:,.0f}"
+        f"₹ {without_solar_bill:,.0f}"
     )
 
     c3.metric(
@@ -108,11 +106,11 @@ if uploaded_file:
     )
 
     # -----------------------------------
-    # SIDE BY SIDE TABLE
+    # SIDE BY SIDE COMPARISON
     # -----------------------------------
 
     st.subheader(
-        "Tariff Comparison"
+        "With Solar vs Without Solar"
     )
 
     comparison_df = pd.DataFrame({
@@ -243,7 +241,7 @@ if uploaded_file:
     chart = create_bill_chart(
 
         current_bill,
-        estimated_bill
+        without_solar_bill
 
     )
 
