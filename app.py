@@ -1,4 +1,6 @@
 import streamlit as st
+import pandas as pd
+
 from utils.pdf_parser import extract_bill_data
 
 st.set_page_config(
@@ -8,20 +10,43 @@ st.set_page_config(
 
 st.title("⚡ DISCOM Bill Analysis")
 
-st.write("Upload DISCOM Net Metering Bill")
-
 uploaded_file = st.file_uploader(
-    "Upload PDF Bill",
+    "Upload MSEDCL Solar Bill",
     type=["pdf"]
 )
 
 if uploaded_file:
 
-    st.success("PDF Uploaded Successfully")
+    data = extract_bill_data(uploaded_file)
 
-    # Extract PDF Data
-    bill_data = extract_bill_data(uploaded_file)
+    st.subheader("Extracted Bill Details")
 
-    st.subheader("Extracted Bill Data")
+    df = pd.DataFrame(
+        data.items(),
+        columns=["Parameter", "Value"]
+    )
 
-    st.write(bill_data)
+    st.table(df)
+
+    # -----------------------------------
+    # WITHOUT SOLAR CALCULATION
+    # -----------------------------------
+
+    if (
+        "Import Units" in data
+        and "Solar Generation" in data
+    ):
+
+        import_units = int(data["Import Units"])
+        solar_units = int(data["Solar Generation"])
+
+        without_solar_units = (
+            import_units + solar_units
+        )
+
+        st.subheader("Solar Savings Analysis")
+
+        st.metric(
+            "Without Solar Consumption",
+            f"{without_solar_units} Units"
+        )
