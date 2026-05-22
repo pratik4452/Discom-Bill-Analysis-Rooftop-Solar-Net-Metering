@@ -4,7 +4,13 @@ import re
 
 def extract_bill_data(pdf_file):
 
+    data = {}
+
     full_text = ""
+
+    # -------------------------------------
+    # READ PDF
+    # -------------------------------------
 
     with pdfplumber.open(pdf_file) as pdf:
 
@@ -15,91 +21,232 @@ def extract_bill_data(pdf_file):
             if text:
                 full_text += text + "\n"
 
-    data = {}
+    # -------------------------------------
+    # DEBUG TEXT
+    # -------------------------------------
 
-    # -----------------------------------
+    lines = full_text.split("\n")
+
+    # -------------------------------------
     # CONSUMER NAME
-    # -----------------------------------
+    # -------------------------------------
 
-    consumer_match = re.search(
-        r"Consumer Name\s*:\s*(.*)",
-        full_text
-    )
+    for line in lines:
 
-    if consumer_match:
-        data["Consumer Name"] = consumer_match.group(1).strip()
+        if "Consumer Name" in line:
 
-    # -----------------------------------
+            try:
+                data["Consumer Name"] = (
+                    line.split(":")[1]
+                    .strip()
+                )
+
+            except:
+                pass
+
+    # -------------------------------------
     # CONSUMER NUMBER
-    # -----------------------------------
+    # -------------------------------------
 
-    consumer_no_match = re.search(
-        r"Consumer No\.\s*:\s*(\d+)",
-        full_text
-    )
+    for line in lines:
 
-    if consumer_no_match:
-        data["Consumer Number"] = consumer_no_match.group(1)
+        if "Consumer No." in line:
 
-    # -----------------------------------
+            match = re.search(
+                r"(\d{10,})",
+                line
+            )
+
+            if match:
+
+                data["Consumer Number"] = (
+                    match.group(1)
+                )
+
+    # -------------------------------------
     # BILL AMOUNT
-    # -----------------------------------
+    # -------------------------------------
 
-    amount_match = re.search(
-        r"Total Bill Amount.*?\s([\d,]+)",
-        full_text
-    )
+    for line in lines:
 
-    if amount_match:
-        data["Bill Amount"] = amount_match.group(1)
+        if (
+            "TOTAL CURRENT BILL"
+            in line.upper()
+        ):
 
-    # -----------------------------------
-    # IMPORT UNITS
-    # -----------------------------------
+            amount_match = re.search(
+                r"([\d,]+\.\d+)",
+                line
+            )
 
-    import_match = re.search(
-        r"TOTAL\s+(\d+)\s+(\d+)",
-        full_text
-    )
+            if amount_match:
 
-    if import_match:
-        data["Import Units"] = import_match.group(1)
-        data["Export Units"] = import_match.group(2)
+                data["Bill Amount"] = (
+                    amount_match.group(1)
+                )
 
-    # -----------------------------------
+    # -------------------------------------
+    # IMPORT / EXPORT
+    # -------------------------------------
+
+    for line in lines:
+
+        if "TOTAL" in line:
+
+            numbers = re.findall(
+                r"\d+",
+                line
+            )
+
+            if len(numbers) >= 2:
+
+                try:
+
+                    data["Import Units"] = (
+                        numbers[0]
+                    )
+
+                    data["Export Units"] = (
+                        numbers[1]
+                    )
+
+                except:
+                    pass
+
+    # -------------------------------------
     # SOLAR GENERATION
-    # -----------------------------------
+    # -------------------------------------
 
-    solar_match = re.search(
-        r"Total Solar Generation Units\s*:\s*(\d+)",
-        full_text
-    )
+    for line in lines:
 
-    if solar_match:
-        data["Solar Generation"] = solar_match.group(1)
+        if (
+            "SOLAR GENERATION"
+            in line.upper()
+        ):
 
-    # -----------------------------------
-    # ADJUSTED UNITS
-    # -----------------------------------
+            numbers = re.findall(
+                r"\d+",
+                line
+            )
 
-    adjusted_match = re.search(
-        r"Adjusted:\s*(\d+)",
-        full_text
-    )
+            if len(numbers) > 0:
 
-    if adjusted_match:
-        data["Adjusted Units"] = adjusted_match.group(1)
+                data[
+                    "Solar Generation"
+                ] = numbers[-1]
 
-    # -----------------------------------
-    # BANKED UNITS
-    # -----------------------------------
+    # -------------------------------------
+    # DEMAND CHARGES
+    # -------------------------------------
 
-    bank_match = re.search(
-        r"Bank:\s*(\d+)",
-        full_text
-    )
+    for line in lines:
 
-    if bank_match:
-        data["Banked Units"] = bank_match.group(1)
+        if "Demand Charges" in line:
+
+            numbers = re.findall(
+                r"[\d,]+\.\d+",
+                line
+            )
+
+            if numbers:
+
+                data[
+                    "Demand Charges"
+                ] = numbers[-1]
+
+    # -------------------------------------
+    # WHEELING CHARGES
+    # -------------------------------------
+
+    for line in lines:
+
+        if "Wheeling Charge" in line:
+
+            numbers = re.findall(
+                r"[\d,]+\.\d+",
+                line
+            )
+
+            if numbers:
+
+                data[
+                    "Wheeling Charges"
+                ] = numbers[-1]
+
+    # -------------------------------------
+    # ENERGY CHARGES
+    # -------------------------------------
+
+    for line in lines:
+
+        if "Energy Charges" in line:
+
+            numbers = re.findall(
+                r"[\d,]+\.\d+",
+                line
+            )
+
+            if numbers:
+
+                data[
+                    "Energy Charges"
+                ] = numbers[-1]
+
+    # -------------------------------------
+    # FAC CHARGES
+    # -------------------------------------
+
+    for line in lines:
+
+        if "FAC" in line:
+
+            numbers = re.findall(
+                r"[\d,]+\.\d+",
+                line
+            )
+
+            if numbers:
+
+                data[
+                    "FAC Charges"
+                ] = numbers[-1]
+
+    # -------------------------------------
+    # ELECTRICITY DUTY
+    # -------------------------------------
+
+    for line in lines:
+
+        if "Electricity Duty" in line:
+
+            numbers = re.findall(
+                r"[\d,]+\.\d+",
+                line
+            )
+
+            if numbers:
+
+                data[
+                    "Electricity Duty"
+                ] = numbers[-1]
+
+    # -------------------------------------
+    # GRID SUPPORT CHARGES
+    # -------------------------------------
+
+    for line in lines:
+
+        if "Grid Support Charge" in line:
+
+            numbers = re.findall(
+                r"[\d,]+\.\d+",
+                line
+            )
+
+            if numbers:
+
+                data[
+                    "Grid Support Charges"
+                ] = numbers[-1]
 
     return data
