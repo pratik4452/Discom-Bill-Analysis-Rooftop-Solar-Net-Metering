@@ -5,22 +5,28 @@ def calculate_before_after_solar(data):
     try:
 
         # -----------------------------------
-        # CURRENT VALUES
+        # INPUTS
         # -----------------------------------
 
-        import_units = data.get(
-            "Import Units",
-            0
+        import_units = float(
+            data.get(
+                "Import Units",
+                0
+            )
         )
 
-        solar_generation = data.get(
-            "Solar Generation",
-            0
+        export_units = float(
+            data.get(
+                "Export Units",
+                0
+            )
         )
 
-        export_units = data.get(
-            "Export Units",
-            0
+        solar_generation = float(
+            data.get(
+                "Solar Generation",
+                0
+            )
         )
 
         # -----------------------------------
@@ -31,80 +37,278 @@ def calculate_before_after_solar(data):
 
             import_units
             + solar_generation
+            - export_units
 
         )
 
         # -----------------------------------
-        # MULTIPLIER
+        # UNIT FACTOR
         # -----------------------------------
 
         if import_units > 0:
 
-            multiplier = (
+            unit_factor = (
                 before_solar_units
                 / import_units
             )
 
         else:
 
-            multiplier = 1
+            unit_factor = 1
 
         # -----------------------------------
-        # CHARGE LIST
+        # AFTER SOLAR VALUES
         # -----------------------------------
 
-        charges = [
-
+        demand_after = data.get(
             "Demand Charges",
+            0
+        )
+
+        wheeling_after = data.get(
             "Wheeling Charges",
+            0
+        )
+
+        energy_after = data.get(
             "Energy Charges",
+            0
+        )
+
+        tod_after = data.get(
             "TOD Charges",
+            0
+        )
+
+        fac_after = data.get(
             "FAC Charges",
+            0
+        )
+
+        duty_after = data.get(
             "Electricity Duty",
+            0
+        )
+
+        tax_after = data.get(
             "Tax on Sale",
-            "Grid Support Charge"
+            0
+        )
 
-        ]
-
-        before_total = 0
-        after_total = 0
+        grid_after = data.get(
+            "Grid Support Charge",
+            0
+        )
 
         # -----------------------------------
-        # CALCULATE BEFORE & AFTER
+        # BEFORE SOLAR CALCULATIONS
         # -----------------------------------
 
-        for charge in charges:
+        # DEMAND CHARGE
+        # Usually same
 
-            after_value = data.get(
-                charge,
-                0
-            )
+        demand_before = demand_after
 
-            before_value = (
-                after_value
-                * multiplier
-            )
+        # WHEELING
+        # Based on units
 
-            result[charge] = {
+        wheeling_before = (
+            wheeling_after
+            * unit_factor
+        )
 
-                "After Solar": round(
-                    after_value,
-                    2
-                ),
+        # ENERGY CHARGE
+        # Based on total units
 
-                "Before Solar": round(
-                    before_value,
-                    2
-                )
+        energy_before = (
+            energy_after
+            * unit_factor
+        )
 
-            }
+        # TOD
+        tod_before = (
+            tod_after
+            * unit_factor
+        )
 
-            after_total += after_value
-            before_total += before_value
+        # FAC
+        fac_before = (
+            fac_after
+            * unit_factor
+        )
+
+        # DUTY
+        duty_before = (
+            duty_after
+            * unit_factor
+        )
+
+        # TAX
+        tax_before = (
+            tax_after
+            * unit_factor
+        )
+
+        # GRID SUPPORT
+        # Remove because no solar
+
+        grid_before = 0
 
         # -----------------------------------
         # TOTALS
         # -----------------------------------
+
+        after_total = (
+
+            demand_after
+            + wheeling_after
+            + energy_after
+            + tod_after
+            + fac_after
+            + duty_after
+            + tax_after
+            + grid_after
+
+        )
+
+        before_total = (
+
+            demand_before
+            + wheeling_before
+            + energy_before
+            + tod_before
+            + fac_before
+            + duty_before
+            + tax_before
+            + grid_before
+
+        )
+
+        savings = (
+            before_total
+            - after_total
+        )
+
+        # -----------------------------------
+        # STORE RESULTS
+        # -----------------------------------
+
+        result["Before Solar Units"] = round(
+            before_solar_units,
+            2
+        )
+
+        result["Demand Charges"] = {
+
+            "After Solar": round(
+                demand_after,
+                2
+            ),
+
+            "Before Solar": round(
+                demand_before,
+                2
+            )
+
+        }
+
+        result["Wheeling Charges"] = {
+
+            "After Solar": round(
+                wheeling_after,
+                2
+            ),
+
+            "Before Solar": round(
+                wheeling_before,
+                2
+            )
+
+        }
+
+        result["Energy Charges"] = {
+
+            "After Solar": round(
+                energy_after,
+                2
+            ),
+
+            "Before Solar": round(
+                energy_before,
+                2
+            )
+
+        }
+
+        result["TOD Charges"] = {
+
+            "After Solar": round(
+                tod_after,
+                2
+            ),
+
+            "Before Solar": round(
+                tod_before,
+                2
+            )
+
+        }
+
+        result["FAC Charges"] = {
+
+            "After Solar": round(
+                fac_after,
+                2
+            ),
+
+            "Before Solar": round(
+                fac_before,
+                2
+            )
+
+        }
+
+        result["Electricity Duty"] = {
+
+            "After Solar": round(
+                duty_after,
+                2
+            ),
+
+            "Before Solar": round(
+                duty_before,
+                2
+            )
+
+        }
+
+        result["Tax on Sale"] = {
+
+            "After Solar": round(
+                tax_after,
+                2
+            ),
+
+            "Before Solar": round(
+                tax_before,
+                2
+            )
+
+        }
+
+        result["Grid Support Charge"] = {
+
+            "After Solar": round(
+                grid_after,
+                2
+            ),
+
+            "Before Solar": round(
+                grid_before,
+                2
+            )
+
+        }
 
         result["Total Bill"] = {
 
@@ -121,22 +325,12 @@ def calculate_before_after_solar(data):
         }
 
         result["Savings"] = round(
-
-            before_total
-            - after_total,
-
+            savings,
             2
-
         )
 
-        result["Before Solar Units"] = (
-            before_solar_units
-        )
+    except Exception as e:
 
-    except:
-
-        result["Error"] = (
-            "Calculation Error"
-        )
+        result["Error"] = str(e)
 
     return result
