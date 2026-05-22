@@ -1,20 +1,7 @@
-def safe_float(value):
-
-    try:
-
-        return float(
-            str(value)
-            .replace(",", "")
-        )
-
-    except:
-
-        return 0
-
-
 def calculate_bill_estimation(
-    solar_data,
-    current_bill_data
+    with_solar_bill,
+    without_solar_units,
+    solar_generation
 ):
 
     result = {}
@@ -22,236 +9,131 @@ def calculate_bill_estimation(
     try:
 
         # ---------------------------------
-        # UNITS
+        # CLEAN VALUES
         # ---------------------------------
 
-        import_units = safe_float(
-            solar_data.get(
-                "Import Units",
-                0
-            )
+        with_solar_bill = float(
+            str(with_solar_bill)
+            .replace(",", "")
         )
 
-        solar_generation = safe_float(
-            solar_data.get(
-                "Solar Generation",
-                0
-            )
+        without_solar_units = float(
+            without_solar_units
         )
 
-        without_solar_units = (
-            import_units
-            + solar_generation
-        )
-
-        multiplier = 1
-
-        if import_units > 0:
-
-            multiplier = (
-                without_solar_units
-                / import_units
-            )
-
-        # ---------------------------------
-        # EXTRACT ACTUAL CHARGES
-        # ---------------------------------
-
-        current_energy = safe_float(
-            current_bill_data.get(
-                "Energy Charges",
-                0
-            )
-        )
-
-        current_fac = safe_float(
-            current_bill_data.get(
-                "FAC Charges",
-                0
-            )
-        )
-
-        current_wheeling = safe_float(
-            current_bill_data.get(
-                "Wheeling Charges",
-                0
-            )
-        )
-
-        current_duty = safe_float(
-            current_bill_data.get(
-                "Electricity Duty",
-                0
-            )
-        )
-
-        current_grid = safe_float(
-            current_bill_data.get(
-                "Grid Support Charges",
-                0
-            )
-        )
-
-        current_demand = safe_float(
-            current_bill_data.get(
-                "Demand Charges",
-                0
-            )
+        solar_generation = float(
+            solar_generation
         )
 
         # ---------------------------------
-        # WITHOUT SOLAR
+        # ASSUMED RATES
         # ---------------------------------
 
-        without_energy = (
-            current_energy
-            * multiplier
-        )
+        energy_rate = 8.95
 
-        without_fac = (
-            current_fac
-            * multiplier
-        )
+        wheeling_rate = 0.81
 
-        without_wheeling = (
-            current_wheeling
-            * multiplier
-        )
+        fac_rate = 0.50
 
-        without_duty = (
-            current_duty
-            * multiplier
-        )
+        duty_percent = 0.09
 
-        without_grid = 0
+        grid_support_rate = 1.42
 
-        without_demand = (
-            current_demand
-        )
+        demand_charges = 202150
 
         # ---------------------------------
-        # TOTALS
+        # WITHOUT SOLAR CALCULATION
         # ---------------------------------
 
-        with_solar_total = (
-
-            current_energy
-            + current_fac
-            + current_wheeling
-            + current_duty
-            + current_grid
-            + current_demand
-
+        energy_charges = (
+            without_solar_units
+            * energy_rate
         )
 
-        without_solar_total = (
-
-            without_energy
-            + without_fac
-            + without_wheeling
-            + without_duty
-            + without_grid
-            + without_demand
-
+        wheeling_charges = (
+            without_solar_units
+            * wheeling_rate
         )
 
-        savings = (
-            without_solar_total
-            - with_solar_total
+        fac_charges = (
+            without_solar_units
+            * fac_rate
+        )
+
+        electricity_duty = (
+            energy_charges
+            * duty_percent
+        )
+
+        # No grid support without solar
+        grid_support_charges = 0
+
+        total_without_solar = (
+
+            demand_charges
+            + energy_charges
+            + wheeling_charges
+            + fac_charges
+            + electricity_duty
+            + grid_support_charges
+
         )
 
         # ---------------------------------
-        # RESULT TABLE
+        # SAVINGS
         # ---------------------------------
 
-        result = {
+        estimated_savings = (
+            total_without_solar
+            - with_solar_bill
+        )
 
-            "Demand Charges": {
+        # ---------------------------------
+        # STORE RESULTS
+        # ---------------------------------
 
-                "With Solar":
-                round(current_demand, 2),
+        result["Demand Charges"] = round(
+            demand_charges,
+            2
+        )
 
-                "Without Solar":
-                round(without_demand, 2)
+        result["Energy Charges"] = round(
+            energy_charges,
+            2
+        )
 
-            },
+        result["Wheeling Charges"] = round(
+            wheeling_charges,
+            2
+        )
 
-            "Wheeling Charges": {
+        result["FAC Charges"] = round(
+            fac_charges,
+            2
+        )
 
-                "With Solar":
-                round(current_wheeling, 2),
+        result["Electricity Duty"] = round(
+            electricity_duty,
+            2
+        )
 
-                "Without Solar":
-                round(without_wheeling, 2)
+        result["Grid Support Charges"] = round(
+            grid_support_charges,
+            2
+        )
 
-            },
+        result["Without Solar Bill"] = round(
+            total_without_solar,
+            2
+        )
 
-            "Energy Charges": {
+        result["Estimated Savings"] = round(
+            estimated_savings,
+            2
+        )
 
-                "With Solar":
-                round(current_energy, 2),
+    except Exception as e:
 
-                "Without Solar":
-                round(without_energy, 2)
-
-            },
-
-            "FAC Charges": {
-
-                "With Solar":
-                round(current_fac, 2),
-
-                "Without Solar":
-                round(without_fac, 2)
-
-            },
-
-            "Electricity Duty": {
-
-                "With Solar":
-                round(current_duty, 2),
-
-                "Without Solar":
-                round(without_duty, 2)
-
-            },
-
-            "Grid Support Charges": {
-
-                "With Solar":
-                round(current_grid, 2),
-
-                "Without Solar":
-                round(without_grid, 2)
-
-            },
-
-            "TOTAL BILL": {
-
-                "With Solar":
-                round(with_solar_total, 2),
-
-                "Without Solar":
-                round(without_solar_total, 2)
-
-            },
-
-            "TOTAL SAVINGS": {
-
-                "With Solar": "-",
-
-                "Without Solar":
-                round(savings, 2)
-
-            }
-
-        }
-
-    except:
-
-        result = {
-            "Error":
-            "Calculation Error"
-        }
+        result["Error"] = str(e)
 
     return result
