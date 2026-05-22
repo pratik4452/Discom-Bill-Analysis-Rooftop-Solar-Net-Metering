@@ -16,7 +16,7 @@ def create_bill_chart(
 
         ],
 
-        "Bill": [
+        "Bill Amount": [
 
             current_bill,
             without_solar_bill
@@ -29,8 +29,8 @@ def create_bill_chart(
 
         df,
         x="Scenario",
-        y="Bill",
-        title="Bill Comparison"
+        y="Bill Amount",
+        title="Solar Savings Comparison"
 
     )
 
