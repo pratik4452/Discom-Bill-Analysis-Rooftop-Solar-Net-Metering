@@ -2,57 +2,7 @@ import plotly.express as px
 import pandas as pd
 
 
-# -------------------------------------
-# PIE CHART
-# -------------------------------------
-
-def create_energy_pie_chart(
-    import_units,
-    solar_generation,
-    export_units
-):
-
-    self_consumption = (
-        solar_generation - export_units
-    )
-
-    df = pd.DataFrame({
-
-        "Category": [
-
-            "Import Units",
-            "Self Consumption",
-            "Export Units"
-
-        ],
-
-        "Units": [
-
-            import_units,
-            self_consumption,
-            export_units
-
-        ]
-
-    })
-
-    fig = px.pie(
-
-        df,
-        names="Category",
-        values="Units",
-        title="Energy Distribution"
-
-    )
-
-    return fig
-
-
-# -------------------------------------
-# BAR CHART
-# -------------------------------------
-
-def create_bill_comparison_chart(
+def create_bill_chart(
     current_bill,
     without_solar_bill
 ):
@@ -66,7 +16,7 @@ def create_bill_comparison_chart(
 
         ],
 
-        "Bill Amount": [
+        "Bill": [
 
             current_bill,
             without_solar_bill
@@ -79,7 +29,7 @@ def create_bill_comparison_chart(
 
         df,
         x="Scenario",
-        y="Bill Amount",
+        y="Bill",
         title="Bill Comparison"
 
     )
