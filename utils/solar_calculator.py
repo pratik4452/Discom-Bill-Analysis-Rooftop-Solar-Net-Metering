@@ -2,69 +2,87 @@ def calculate_without_solar(data):
 
     result = {}
 
-    try:
+    solar_generation = data.get(
+        "Solar Generation",
+        0
+    )
 
-        import_units = int(
-            str(data.get("Import Units", 0))
-            .replace(",", "")
-        )
+    # -----------------------------------
+    # MULTIPLIER LOGIC
+    # -----------------------------------
 
-        solar_generation = int(
-            str(data.get("Solar Generation", 0))
-            .replace(",", "")
-        )
+    multiplier = 1.65
 
-        export_units = int(
-            str(data.get("Export Units", 0))
-            .replace(",", "")
-        )
+    # -----------------------------------
+    # RECONSTRUCT WITHOUT SOLAR
+    # -----------------------------------
 
-        # ---------------------------------
-        # TOTAL CONSUMPTION
-        # ---------------------------------
+    result["Demand Charges"] = (
+        data.get("Demand Charges", 0)
+        * multiplier
+    )
 
-        total_consumption = (
-            import_units + solar_generation
-        )
+    result["Wheeling Charges"] = (
+        data.get("Wheeling Charges", 0)
+        * multiplier
+    )
 
-        # ---------------------------------
-        # SELF CONSUMPTION
-        # ---------------------------------
+    result["Energy Charges"] = (
+        data.get("Energy Charges", 0)
+        * multiplier
+    )
 
-        self_consumption = (
-            solar_generation - export_units
-        )
+    result["TOD Charges"] = (
+        data.get("TOD Charges", 0)
+        * multiplier
+    )
 
-        # ---------------------------------
-        # SOLAR SAVINGS UNITS
-        # ---------------------------------
+    result["FAC Charges"] = (
+        data.get("FAC Charges", 0)
+        * multiplier
+    )
 
-        solar_offset = (
-            self_consumption + export_units
-        )
+    result["Electricity Duty"] = (
+        data.get("Electricity Duty", 0)
+        * multiplier
+    )
 
-        result["Import Units"] = import_units
+    result["Tax on Sale"] = (
+        data.get("Tax on Sale", 0)
+        * multiplier
+    )
 
-        result["Solar Generation"] = solar_generation
+    result["Grid Support Charge"] = (
+        data.get("Grid Support Charge", 0)
+        * multiplier
+    )
 
-        result["Export Units"] = export_units
+    result["Debit Bill Adjustment"] = (
+        data.get("Debit Bill Adjustment", 0)
+    )
 
-        result["Self Consumption"] = (
-            self_consumption
-        )
+    # -----------------------------------
+    # TOTAL
+    # -----------------------------------
 
-        result["Without Solar Units"] = (
-            total_consumption
-        )
+    total = (
 
-        result["Solar Offset Units"] = (
-            solar_offset
-        )
+        result["Demand Charges"]
+        + result["Wheeling Charges"]
+        + result["Energy Charges"]
+        + result["TOD Charges"]
+        + result["FAC Charges"]
+        + result["Electricity Duty"]
+        + result["Tax on Sale"]
+        + result["Grid Support Charge"]
+        + result["Debit Bill Adjustment"]
 
-    except:
+    )
 
-        result["Error"] = (
-            "Calculation Error"
-        )
+    result["Without Solar Bill"] = total
+
+    result["Solar Generation"] = (
+        solar_generation
+    )
 
     return result
