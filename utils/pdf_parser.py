@@ -1,7 +1,10 @@
 import pdfplumber
-import pandas as pd
 import re
 
+
+# -----------------------------------
+# CLEAN AMOUNT
+# -----------------------------------
 
 def clean_amount(value):
 
@@ -11,7 +14,11 @@ def clean_amount(value):
 
         value = value.replace(",", "")
 
-        value = re.sub(r"[^\d\.-]", "", value)
+        value = re.sub(
+            r"[^\d\.-]",
+            "",
+            value
+        )
 
         return float(value)
 
@@ -20,15 +27,19 @@ def clean_amount(value):
         return 0
 
 
+# -----------------------------------
+# EXTRACT BILL DATA
+# -----------------------------------
+
 def extract_bill_data(pdf_file):
 
     data = {}
 
     full_text = ""
 
-    # -------------------------------------
-    # READ PDF TEXT
-    # -------------------------------------
+    # -----------------------------------
+    # READ PDF
+    # -----------------------------------
 
     with pdfplumber.open(pdf_file) as pdf:
 
@@ -40,9 +51,9 @@ def extract_bill_data(pdf_file):
 
                 full_text += text + "\n"
 
-    # -------------------------------------
+    # -----------------------------------
     # CONSUMER NAME
-    # -------------------------------------
+    # -----------------------------------
 
     consumer_match = re.search(
 
@@ -58,9 +69,9 @@ def extract_bill_data(pdf_file):
             consumer_match.group(1).strip()
         )
 
-    # -------------------------------------
+    # -----------------------------------
     # CONSUMER NUMBER
-    # -------------------------------------
+    # -----------------------------------
 
     consumer_no_match = re.search(
 
@@ -76,13 +87,13 @@ def extract_bill_data(pdf_file):
             consumer_no_match.group(1)
         )
 
-    # -------------------------------------
+    # -----------------------------------
     # BILL MONTH
-    # -------------------------------------
+    # -----------------------------------
 
     month_match = re.search(
 
-        r"Bill Month\s*:\s*([A-Z\-0-9]+)",
+        r"Bill Month\s*:\s*([A-Z0-9\-]+)",
 
         full_text
 
@@ -94,9 +105,9 @@ def extract_bill_data(pdf_file):
             month_match.group(1)
         )
 
-    # -------------------------------------
-    # IMPORT / EXPORT
-    # -------------------------------------
+    # -----------------------------------
+    # IMPORT / EXPORT UNITS
+    # -----------------------------------
 
     total_match = re.search(
 
@@ -108,17 +119,17 @@ def extract_bill_data(pdf_file):
 
     if total_match:
 
-        data["Import Units"] = (
-            int(total_match.group(1))
+        data["Import Units"] = int(
+            total_match.group(1)
         )
 
-        data["Export Units"] = (
-            int(total_match.group(2))
+        data["Export Units"] = int(
+            total_match.group(2)
         )
 
-    # -------------------------------------
+    # -----------------------------------
     # SOLAR GENERATION
-    # -------------------------------------
+    # -----------------------------------
 
     solar_match = re.search(
 
@@ -130,170 +141,71 @@ def extract_bill_data(pdf_file):
 
     if solar_match:
 
-        data["Solar Generation"] = (
-            int(solar_match.group(1))
+        data["Solar Generation"] = int(
+            solar_match.group(1)
         )
 
-    # -------------------------------------
-    # DEMAND CHARGES
-    # -------------------------------------
+    # -----------------------------------
+    # CHARGE EXTRACTION FUNCTION
+    # -----------------------------------
 
-    demand_match = re.search(
+    def extract_charge(label):
 
-        r"Demand Charges.*?([\d,]+\.\d+)",
+        pattern = (
+            rf"{label}.*?([\d,]+\.\d+)"
+        )
 
-        full_text
+        match = re.search(
+            pattern,
+            full_text
+        )
 
+        if match:
+
+            return clean_amount(
+                match.group(1)
+            )
+
+        return 0
+
+    # -----------------------------------
+    # CHARGES
+    # -----------------------------------
+
+    data["Demand Charges"] = extract_charge(
+        "Demand Charges"
     )
 
-    if demand_match:
-
-        data["Demand Charges"] = clean_amount(
-            demand_match.group(1)
-        )
-
-    # -------------------------------------
-    # WHEELING CHARGES
-    # -------------------------------------
-
-    wheeling_match = re.search(
-
-        r"Wheeling Charge.*?([\d,]+\.\d+)",
-
-        full_text
-
+    data["Wheeling Charges"] = extract_charge(
+        "Wheeling Charge"
     )
 
-    if wheeling_match:
-
-        data["Wheeling Charges"] = clean_amount(
-            wheeling_match.group(1)
-        )
-
-    # -------------------------------------
-    # ENERGY CHARGES
-    # -------------------------------------
-
-    energy_match = re.search(
-
-        r"Energy Charges.*?([\d,]+\.\d+)",
-
-        full_text
-
+    data["Energy Charges"] = extract_charge(
+        "Energy Charges"
     )
 
-    if energy_match:
-
-        data["Energy Charges"] = clean_amount(
-            energy_match.group(1)
-        )
-
-    # -------------------------------------
-    # TOD CHARGES
-    # -------------------------------------
-
-    tod_match = re.search(
-
-        r"TOD Tariff EC.*?([\d,]+\.\d+)",
-
-        full_text
-
+    data["TOD Charges"] = extract_charge(
+        "TOD Tariff EC"
     )
 
-    if tod_match:
-
-        data["TOD Charges"] = clean_amount(
-            tod_match.group(1)
-        )
-
-    # -------------------------------------
-    # FAC CHARGES
-    # -------------------------------------
-
-    fac_match = re.search(
-
-        r"FAC.*?([\d,]+\.\d+)",
-
-        full_text
-
+    data["FAC Charges"] = extract_charge(
+        "FAC"
     )
 
-    if fac_match:
-
-        data["FAC Charges"] = clean_amount(
-            fac_match.group(1)
-        )
-
-    # -------------------------------------
-    # ELECTRICITY DUTY
-    # -------------------------------------
-
-    duty_match = re.search(
-
-        r"Electricity Duty.*?([\d,]+\.\d+)",
-
-        full_text
-
+    data["Electricity Duty"] = extract_charge(
+        "Electricity Duty"
     )
 
-    if duty_match:
-
-        data["Electricity Duty"] = clean_amount(
-            duty_match.group(1)
-        )
-
-    # -------------------------------------
-    # TAX ON SALE
-    # -------------------------------------
-
-    tax_match = re.search(
-
-        r"Tax on Sale.*?([\d,]+\.\d+)",
-
-        full_text
-
+    data["Tax on Sale"] = extract_charge(
+        "Tax on Sale"
     )
 
-    if tax_match:
-
-        data["Tax on Sale"] = clean_amount(
-            tax_match.group(1)
-        )
-
-    # -------------------------------------
-    # GRID SUPPORT
-    # -------------------------------------
-
-    grid_match = re.search(
-
-        r"Grid Support Charge.*?([\d,]+\.\d+)",
-
-        full_text
-
+    data["Grid Support Charge"] = extract_charge(
+        "Grid Support Charge"
     )
 
-    if grid_match:
-
-        data["Grid Support Charge"] = clean_amount(
-            grid_match.group(1)
-        )
-
-    # -------------------------------------
-    # TOTAL BILL
-    # -------------------------------------
-
-    total_bill_match = re.search(
-
-        r"TOTAL CURRENT BILL AS PER TARIFF.*?([\d,]+\.\d+)",
-
-        full_text
-
+    data["Current Bill"] = extract_charge(
+        "TOTAL CURRENT BILL AS PER TARIFF"
     )
-
-    if total_bill_match:
-
-        data["Current Bill"] = clean_amount(
-            total_bill_match.group(1)
-        )
 
     return data
