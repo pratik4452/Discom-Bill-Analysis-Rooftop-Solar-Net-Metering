@@ -1,4 +1,5 @@
 import streamlit as st
+from utils.pdf_parser import extract_bill_data
 
 st.set_page_config(
     page_title="DISCOM Bill Analysis",
@@ -15,4 +16,12 @@ uploaded_file = st.file_uploader(
 )
 
 if uploaded_file:
+
     st.success("PDF Uploaded Successfully")
+
+    # Extract PDF Data
+    bill_data = extract_bill_data(uploaded_file)
+
+    st.subheader("Extracted Bill Data")
+
+    st.write(bill_data)
