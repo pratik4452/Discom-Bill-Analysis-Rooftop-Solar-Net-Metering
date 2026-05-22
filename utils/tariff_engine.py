@@ -1,111 +1,210 @@
-def calculate_bill_estimation(units):
+def calculate_bill_estimation(
+    solar_data,
+    current_bill_data
+):
 
     result = {}
 
     try:
 
-        units = float(units)
-
         # ---------------------------------
-        # ENERGY CHARGES
+        # INPUTS
         # ---------------------------------
 
-        energy_rate = 8.50
+        import_units = float(
+            solar_data.get(
+                "Import Units",
+                0
+            )
+        )
 
-        energy_charges = (
-            units * energy_rate
+        solar_generation = float(
+            solar_data.get(
+                "Solar Generation",
+                0
+            )
+        )
+
+        without_solar_units = (
+            import_units
+            + solar_generation
         )
 
         # ---------------------------------
-        # FAC CHARGES
+        # EXISTING CHARGES
         # ---------------------------------
 
-        fac_rate = 1.00
+        current_energy = 440610
+        current_fac = 26102
+        current_wheeling = 42286
+        current_duty = 57289
+        current_grid = 46935
+        current_demand = 202150
 
-        fac_charges = (
-            units * fac_rate
+        # ---------------------------------
+        # UNIT MULTIPLIER
+        # ---------------------------------
+
+        multiplier = (
+            without_solar_units
+            / import_units
         )
 
         # ---------------------------------
-        # WHEELING CHARGES
+        # WITHOUT SOLAR CHARGES
         # ---------------------------------
 
-        wheeling_rate = 0.75
+        without_energy = (
+            current_energy
+            * multiplier
+        )
 
-        wheeling_charges = (
-            units * wheeling_rate
+        without_fac = (
+            current_fac
+            * multiplier
+        )
+
+        without_wheeling = (
+            current_wheeling
+            * multiplier
+        )
+
+        without_duty = (
+            current_duty
+            * multiplier
+        )
+
+        # Grid support removed
+        without_grid = 0
+
+        # Demand same
+        without_demand = (
+            current_demand
         )
 
         # ---------------------------------
-        # ELECTRICITY DUTY
+        # TOTALS
         # ---------------------------------
 
-        duty_rate = 0.075
+        with_solar_total = (
 
-        electricity_duty = (
-            energy_charges * duty_rate
+            current_energy
+            + current_fac
+            + current_wheeling
+            + current_duty
+            + current_grid
+            + current_demand
+
         )
 
-        # ---------------------------------
-        # FIXED CHARGES
-        # ---------------------------------
+        without_solar_total = (
 
-        fixed_charges = 5000
+            without_energy
+            + without_fac
+            + without_wheeling
+            + without_duty
+            + without_grid
+            + without_demand
 
-        # ---------------------------------
-        # TOTAL BILL
-        # ---------------------------------
+        )
 
-        total_bill = (
-
-            energy_charges
-            + fac_charges
-            + wheeling_charges
-            + electricity_duty
-            + fixed_charges
-
+        savings = (
+            without_solar_total
+            - with_solar_total
         )
 
         # ---------------------------------
         # STORE RESULTS
         # ---------------------------------
 
-        result["Units"] = round(units, 2)
+        result = {
 
-        result["Energy Charges"] = round(
-            energy_charges,
-            2
-        )
+            "Demand Charges": {
 
-        result["FAC Charges"] = round(
-            fac_charges,
-            2
-        )
+                "With Solar":
+                round(current_demand, 2),
 
-        result["Wheeling Charges"] = round(
-            wheeling_charges,
-            2
-        )
+                "Without Solar":
+                round(without_demand, 2)
 
-        result["Electricity Duty"] = round(
-            electricity_duty,
-            2
-        )
+            },
 
-        result["Fixed Charges"] = round(
-            fixed_charges,
-            2
-        )
+            "Wheeling Charges": {
 
-        result["Estimated Bill"] = round(
-            total_bill,
-            2
-        )
+                "With Solar":
+                round(current_wheeling, 2),
+
+                "Without Solar":
+                round(without_wheeling, 2)
+
+            },
+
+            "Energy Charges": {
+
+                "With Solar":
+                round(current_energy, 2),
+
+                "Without Solar":
+                round(without_energy, 2)
+
+            },
+
+            "FAC Charges": {
+
+                "With Solar":
+                round(current_fac, 2),
+
+                "Without Solar":
+                round(without_fac, 2)
+
+            },
+
+            "Electricity Duty": {
+
+                "With Solar":
+                round(current_duty, 2),
+
+                "Without Solar":
+                round(without_duty, 2)
+
+            },
+
+            "Grid Support Charges": {
+
+                "With Solar":
+                round(current_grid, 2),
+
+                "Without Solar":
+                round(without_grid, 2)
+
+            },
+
+            "TOTAL BILL": {
+
+                "With Solar":
+                round(with_solar_total, 2),
+
+                "Without Solar":
+                round(without_solar_total, 2)
+
+            },
+
+            "TOTAL SAVINGS": {
+
+                "With Solar": "-",
+
+                "Without Solar":
+                round(savings, 2)
+
+            }
+
+        }
 
     except:
 
-        result["Error"] = (
+        result = {
+            "Error":
             "Tariff Calculation Error"
-        )
+        }
 
     return result
