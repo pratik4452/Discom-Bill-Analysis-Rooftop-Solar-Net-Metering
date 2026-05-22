@@ -1,30 +1,57 @@
-def estimate_without_solar_bill(
-
-    data,
-    solar_analysis
-
-):
+def calculate_before_after_solar(data):
 
     result = {}
 
     try:
 
-        current_units = data.get(
+        # -----------------------------------
+        # CURRENT VALUES
+        # -----------------------------------
+
+        import_units = data.get(
             "Import Units",
             0
         )
 
-        without_solar_units = (
-            solar_analysis.get(
-                "Without Solar Units",
-                0
-            )
+        solar_generation = data.get(
+            "Solar Generation",
+            0
         )
 
-        multiplier = (
-            without_solar_units
-            / current_units
+        export_units = data.get(
+            "Export Units",
+            0
         )
+
+        # -----------------------------------
+        # BEFORE SOLAR UNITS
+        # -----------------------------------
+
+        before_solar_units = (
+
+            import_units
+            + solar_generation
+
+        )
+
+        # -----------------------------------
+        # MULTIPLIER
+        # -----------------------------------
+
+        if import_units > 0:
+
+            multiplier = (
+                before_solar_units
+                / import_units
+            )
+
+        else:
+
+            multiplier = 1
+
+        # -----------------------------------
+        # CHARGE LIST
+        # -----------------------------------
 
         charges = [
 
@@ -39,36 +66,77 @@ def estimate_without_solar_bill(
 
         ]
 
-        total = 0
+        before_total = 0
+        after_total = 0
+
+        # -----------------------------------
+        # CALCULATE BEFORE & AFTER
+        # -----------------------------------
 
         for charge in charges:
 
-            current_value = data.get(
+            after_value = data.get(
                 charge,
                 0
             )
 
-            estimated_value = (
-                current_value
+            before_value = (
+                after_value
                 * multiplier
             )
 
-            result[charge] = round(
-                estimated_value,
+            result[charge] = {
+
+                "After Solar": round(
+                    after_value,
+                    2
+                ),
+
+                "Before Solar": round(
+                    before_value,
+                    2
+                )
+
+            }
+
+            after_total += after_value
+            before_total += before_value
+
+        # -----------------------------------
+        # TOTALS
+        # -----------------------------------
+
+        result["Total Bill"] = {
+
+            "After Solar": round(
+                after_total,
+                2
+            ),
+
+            "Before Solar": round(
+                before_total,
                 2
             )
 
-            total += estimated_value
+        }
 
-        result["Estimated Bill"] = round(
-            total,
+        result["Savings"] = round(
+
+            before_total
+            - after_total,
+
             2
+
+        )
+
+        result["Before Solar Units"] = (
+            before_solar_units
         )
 
     except:
 
         result["Error"] = (
-            "Bill Estimation Error"
+            "Calculation Error"
         )
 
     return result
