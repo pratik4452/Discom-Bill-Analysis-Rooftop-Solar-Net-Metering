@@ -58,17 +58,17 @@ uploaded_file = st.file_uploader(
 
 if uploaded_file:
 
-    # -----------------------------------------------
-    # EXTRACT BILL DATA
-    # -----------------------------------------------
+    # ------------------------------------------------
+    # EXTRACT DATA
+    # ------------------------------------------------
 
     bill_data = extract_bill_data(
         uploaded_file
     )
 
-    # -----------------------------------------------
+    # ------------------------------------------------
     # SOLAR CALCULATIONS
-    # -----------------------------------------------
+    # ------------------------------------------------
 
     solar_results = (
         calculate_without_solar(
@@ -76,9 +76,9 @@ if uploaded_file:
         )
     )
 
-    # -----------------------------------------------
-    # VALUES
-    # -----------------------------------------------
+    # ------------------------------------------------
+    # IMPORTANT VALUES
+    # ------------------------------------------------
 
     current_bill = (
         bill_data.get(
@@ -101,9 +101,9 @@ if uploaded_file:
         )
     )
 
-    # -----------------------------------------------
-    # ESTIMATED BILL
-    # -----------------------------------------------
+    # ------------------------------------------------
+    # ESTIMATED WITHOUT SOLAR BILL
+    # ------------------------------------------------
 
     estimated_bill = (
         calculate_bill_estimation(
@@ -115,9 +115,9 @@ if uploaded_file:
         )
     )
 
-    # -----------------------------------------------
-    # CLEAN CURRENT BILL
-    # -----------------------------------------------
+    # ------------------------------------------------
+    # CLEAN VALUES
+    # ------------------------------------------------
 
     try:
 
@@ -145,7 +145,7 @@ if uploaded_file:
     )
 
     # ------------------------------------------------
-    # KPI CARDS
+    # KPI SECTION
     # ------------------------------------------------
 
     st.subheader(
@@ -181,7 +181,7 @@ if uploaded_file:
     )
 
     # ------------------------------------------------
-    # ENERGY KPI
+    # ENERGY ANALYTICS
     # ------------------------------------------------
 
     st.subheader(
@@ -283,12 +283,75 @@ if uploaded_file:
         )
 
     # ------------------------------------------------
-    # SIDE BY SIDE COMPARISON
+    # SIDE BY SIDE BILL COMPARISON
     # ------------------------------------------------
 
     st.subheader(
         "With Solar vs Without Solar"
     )
+
+    # ------------------------------------------------
+    # CLEAN WITH SOLAR VALUES
+    # ------------------------------------------------
+
+    def clean_value(value):
+
+        try:
+
+            return float(
+                str(value)
+                .replace(",", "")
+            )
+
+        except:
+
+            return 0
+
+    demand_charges = clean_value(
+        bill_data.get(
+            "Demand Charges",
+            0
+        )
+    )
+
+    energy_charges = clean_value(
+        bill_data.get(
+            "Energy Charges",
+            0
+        )
+    )
+
+    wheeling_charges = clean_value(
+        bill_data.get(
+            "Wheeling Charges",
+            0
+        )
+    )
+
+    fac_charges = clean_value(
+        bill_data.get(
+            "FAC Charges",
+            0
+        )
+    )
+
+    electricity_duty = clean_value(
+        bill_data.get(
+            "Electricity Duty",
+            0
+        )
+    )
+
+    grid_support = clean_value(
+        bill_data.get(
+            "Grid Support Charges",
+            0
+        )
+    )
+
+    # ------------------------------------------------
+    # COMPARISON TABLE
+    # ------------------------------------------------
 
     comparison_data = {
 
@@ -306,12 +369,18 @@ if uploaded_file:
 
         "With Solar": [
 
-            "As Per Bill",
-            "As Per Bill",
-            "As Per Bill",
-            "As Per Bill",
-            "As Per Bill",
-            "As Per Bill",
+            f"₹ {demand_charges:,.0f}",
+
+            f"₹ {energy_charges:,.0f}",
+
+            f"₹ {wheeling_charges:,.0f}",
+
+            f"₹ {fac_charges:,.0f}",
+
+            f"₹ {electricity_duty:,.0f}",
+
+            f"₹ {grid_support:,.0f}",
+
             f"₹ {current_bill:,.0f}"
 
         ],
@@ -346,7 +415,7 @@ if uploaded_file:
     )
 
     # ------------------------------------------------
-    # RAW TABLES
+    # RAW BILL DATA
     # ------------------------------------------------
 
     st.subheader(
@@ -365,6 +434,10 @@ if uploaded_file:
         use_container_width=True
     )
 
+    # ------------------------------------------------
+    # SOLAR CALCULATIONS TABLE
+    # ------------------------------------------------
+
     st.subheader(
         "Solar Calculation Details"
     )
@@ -380,6 +453,10 @@ if uploaded_file:
         solar_df,
         use_container_width=True
     )
+
+    # ------------------------------------------------
+    # ESTIMATED BILL DETAILS
+    # ------------------------------------------------
 
     st.subheader(
         "Estimated Bill Details"
