@@ -5,9 +5,17 @@ from utils.pdf_parser import (
     extract_bill_data
 )
 
+from utils.solar_calculator import (
+    calculate_solar_analysis
+)
+
 from utils.tariff_engine import (
     estimate_without_solar_bill
 )
+
+# -----------------------------------
+# PAGE CONFIG
+# -----------------------------------
 
 st.set_page_config(
 
@@ -16,9 +24,21 @@ st.set_page_config(
 
 )
 
+# -----------------------------------
+# TITLE
+# -----------------------------------
+
 st.title(
-    "⚡ DISCOM Solar Bill Intelligence"
+    "⚡ DISCOM Bill Analysis"
 )
+
+st.markdown(
+    "### Rooftop Solar Net Metering Intelligence"
+)
+
+# -----------------------------------
+# FILE UPLOAD
+# -----------------------------------
 
 uploaded_file = st.file_uploader(
 
@@ -27,29 +47,46 @@ uploaded_file = st.file_uploader(
 
 )
 
+# -----------------------------------
+# PROCESS FILE
+# -----------------------------------
+
 if uploaded_file:
 
-    # ---------------------------------
-    # EXTRACT DATA
-    # ---------------------------------
+    # -----------------------------------
+    # EXTRACT BILL DATA
+    # -----------------------------------
 
     data = extract_bill_data(
         uploaded_file
     )
 
-    # ---------------------------------
-    # ESTIMATE WITHOUT SOLAR
-    # ---------------------------------
+    # -----------------------------------
+    # SOLAR ANALYSIS
+    # -----------------------------------
 
-    estimated = (
-        estimate_without_solar_bill(
+    solar_analysis = (
+        calculate_solar_analysis(
             data
         )
     )
 
-    # ---------------------------------
-    # KPI
-    # ---------------------------------
+    # -----------------------------------
+    # BILL ESTIMATION
+    # -----------------------------------
+
+    estimated_bill = (
+        estimate_without_solar_bill(
+
+            data,
+            solar_analysis
+
+        )
+    )
+
+    # -----------------------------------
+    # KPI SECTION
+    # -----------------------------------
 
     st.subheader(
         "Financial Summary"
@@ -60,44 +97,102 @@ if uploaded_file:
         0
     )
 
-    estimated_bill = estimated.get(
-        "Estimated Bill Without Solar",
-        0
+    without_solar_bill = (
+        estimated_bill.get(
+            "Estimated Bill",
+            0
+        )
     )
 
     savings = (
-        estimated_bill
+        without_solar_bill
         - current_bill
     )
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3 = (
+        st.columns(3)
+    )
 
     col1.metric(
+
         "Current Bill",
+
         f"₹ {current_bill:,.0f}"
+
     )
 
     col2.metric(
+
         "Without Solar Bill",
-        f"₹ {estimated_bill:,.0f}"
+
+        f"₹ {without_solar_bill:,.0f}"
+
     )
 
     col3.metric(
+
         "Estimated Savings",
+
         f"₹ {savings:,.0f}"
+
     )
 
-    # ---------------------------------
-    # SIDE-BY-SIDE TABLE
-    # ---------------------------------
+    # -----------------------------------
+    # ENERGY ANALYTICS
+    # -----------------------------------
 
     st.subheader(
-        "Side-by-Side Charge Analysis"
+        "Energy Analytics"
+    )
+
+    col4, col5, col6 = (
+        st.columns(3)
+    )
+
+    col4.metric(
+
+        "Import Units",
+
+        data.get(
+            "Import Units",
+            0
+        )
+
+    )
+
+    col5.metric(
+
+        "Solar Generation",
+
+        data.get(
+            "Solar Generation",
+            0
+        )
+
+    )
+
+    col6.metric(
+
+        "Self Consumption",
+
+        solar_analysis.get(
+            "Self Consumption",
+            0
+        )
+
+    )
+
+    # -----------------------------------
+    # SIDE BY SIDE COMPARISON
+    # -----------------------------------
+
+    st.subheader(
+        "Charge Comparison"
     )
 
     comparison_data = []
 
-    charge_list = [
+    charges = [
 
         "Demand Charges",
         "Wheeling Charges",
@@ -110,21 +205,21 @@ if uploaded_file:
 
     ]
 
-    for charge in charge_list:
+    for charge in charges:
 
         comparison_data.append({
 
-            "Charge":
+            "Charge": charge,
 
+            "Current Bill": data.get(
                 charge,
+                0
+            ),
 
-            "Current Bill":
-
-                data.get(charge, 0),
-
-            "Without Solar":
-
-                estimated.get(charge, 0)
+            "Without Solar": estimated_bill.get(
+                charge,
+                0
+            )
 
         })
 
@@ -139,9 +234,9 @@ if uploaded_file:
 
     )
 
-    # ---------------------------------
-    # RAW EXTRACTED DATA
-    # ---------------------------------
+    # -----------------------------------
+    # RAW DATA
+    # -----------------------------------
 
     st.subheader(
         "Extracted Bill Data"
