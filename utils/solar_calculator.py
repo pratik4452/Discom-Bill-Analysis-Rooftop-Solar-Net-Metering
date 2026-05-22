@@ -1,67 +1,73 @@
-def calculate_without_solar(data):
+def calculate_solar_analysis(data):
 
     result = {}
 
-    multiplier = 1.60
+    try:
 
-    result["Demand Charges"] = (
-        data.get("Demand Charges", 0)
-        * multiplier
-    )
+        import_units = data.get(
+            "Import Units",
+            0
+        )
 
-    result["Wheeling Charges"] = (
-        data.get("Wheeling Charges", 0)
-        * multiplier
-    )
+        export_units = data.get(
+            "Export Units",
+            0
+        )
 
-    result["Energy Charges"] = (
-        data.get("Energy Charges", 0)
-        * multiplier
-    )
+        solar_generation = data.get(
+            "Solar Generation",
+            0
+        )
 
-    result["TOD Charges"] = (
-        data.get("TOD Charges", 0)
-        * multiplier
-    )
+        # -----------------------------------
+        # WITHOUT SOLAR UNITS
+        # -----------------------------------
 
-    result["FAC Charges"] = (
-        data.get("FAC Charges", 0)
-        * multiplier
-    )
+        without_solar_units = (
 
-    result["Electricity Duty"] = (
-        data.get("Electricity Duty", 0)
-        * multiplier
-    )
+            import_units
+            + solar_generation
 
-    result["Tax on Sale"] = (
-        data.get("Tax on Sale", 0)
-        * multiplier
-    )
+        )
 
-    result["Grid Support Charge"] = (
-        data.get("Grid Support Charge", 0)
-        * multiplier
-    )
+        # -----------------------------------
+        # SELF CONSUMPTION
+        # -----------------------------------
 
-    result["Debit Bill Adjustment"] = (
-        data.get("Debit Bill Adjustment", 0)
-    )
+        self_consumption = (
 
-    total = (
+            solar_generation
+            - export_units
 
-        result["Demand Charges"]
-        + result["Wheeling Charges"]
-        + result["Energy Charges"]
-        + result["TOD Charges"]
-        + result["FAC Charges"]
-        + result["Electricity Duty"]
-        + result["Tax on Sale"]
-        + result["Grid Support Charge"]
-        + result["Debit Bill Adjustment"]
+        )
 
-    )
+        # -----------------------------------
+        # SOLAR OFFSET
+        # -----------------------------------
 
-    result["Without Solar Bill"] = total
+        solar_offset = (
+
+            self_consumption
+            + export_units
+
+        )
+
+        result["Without Solar Units"] = (
+            without_solar_units
+        )
+
+        result["Self Consumption"] = (
+            self_consumption
+        )
+
+        result["Solar Offset Units"] = (
+            solar_offset
+        )
+
+    except:
+
+        result["Error"] = (
+            "Calculation Error"
+        )
 
     return result
