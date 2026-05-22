@@ -15,11 +15,8 @@ def extract_amount(pattern, text):
         try:
 
             return float(
-
                 match.group(1)
                 .replace(",", "")
-                .strip()
-
             )
 
         except:
@@ -46,67 +43,100 @@ def extract_bill_data(pdf_file):
     data = {}
 
     # -----------------------------------
-    # BASIC DETAILS
+    # MAIN BILL VALUES
     # -----------------------------------
 
-    data["Demand Charges"] = extract_amount(
-        r"Demand Charges.*?([\d,]+\.\d+)",
+    data["Current Bill"] = extract_amount(
+
+        r"TOTAL CURRENT BILL AS PER TARIFF\s+([\d,]+\.\d+)",
+
         full_text
+
+    )
+
+    data["Demand Charges"] = extract_amount(
+
+        r"Demand Charges.*?([\d,]+\.\d+)",
+
+        full_text
+
     )
 
     data["Wheeling Charges"] = extract_amount(
+
         r"Wheeling Charge.*?([\d,]+\.\d+)",
+
         full_text
+
     )
 
     data["Energy Charges"] = extract_amount(
+
         r"Energy Charges.*?([\d,]+\.\d+)",
+
         full_text
+
     )
 
     data["TOD Charges"] = extract_amount(
+
         r"TOD Tariff EC.*?([\d,]+\.\d+)",
+
         full_text
+
     )
 
     data["FAC Charges"] = extract_amount(
+
         r"FAC.*?([\d,]+\.\d+)",
+
         full_text
+
     )
 
     data["Electricity Duty"] = extract_amount(
+
         r"Electricity Duty.*?([\d,]+\.\d+)",
+
         full_text
+
     )
 
     data["Tax on Sale"] = extract_amount(
+
         r"Tax on Sale.*?([\d,]+\.\d+)",
+
         full_text
+
     )
 
     data["Grid Support Charge"] = extract_amount(
+
         r"Grid Support Charge.*?([\d,]+\.\d+)",
+
         full_text
+
     )
 
     data["Debit Bill Adjustment"] = extract_amount(
-        r"Debit Bill Adjustment.*?([\d,]+\.\d+)",
-        full_text
-    )
 
-    data["Current Bill"] = extract_amount(
-        r"TOTAL CURRENT BILL AS PER TARIFF\s+([\d,]+\.\d+)",
+        r"Debit Bill Adjustment.*?([\d,]+\.\d+)",
+
         full_text
+
     )
 
     # -----------------------------------
-    # SOLAR DETAILS
+    # SOLAR GENERATION
     # -----------------------------------
 
     solar_match = re.search(
-        r"(\d+)\s+Units.*?Solar",
+
+        r"Solar.*?(\d+)",
+
         full_text,
         re.IGNORECASE
+
     )
 
     if solar_match:
