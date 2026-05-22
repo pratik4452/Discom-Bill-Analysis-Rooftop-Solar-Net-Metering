@@ -1,76 +1,93 @@
-def calculate_bill_estimation(
-    with_solar_bill,
-    without_solar_units,
-    solar_generation
-):
+def calculate_bill_estimation(units):
 
     result = {}
 
     try:
 
-        with_solar_bill = float(
-            str(with_solar_bill)
+        # ---------------------------------
+        # SAFE VALUE CONVERSION
+        # ---------------------------------
+
+        if units is None:
+            units = 0
+
+        units = (
+            str(units)
             .replace(",", "")
+            .strip()
         )
 
-        without_solar_units = float(
-            without_solar_units
-        )
+        if units == "":
+            units = 0
 
-        energy_rate = 8.95
-        wheeling_rate = 0.81
-        fac_rate = 0.50
-        duty_percent = 0.09
-
-        demand_charges = 202150
+        units = float(units)
 
         # ---------------------------------
-        # CALCULATIONS
+        # ENERGY CHARGES
         # ---------------------------------
+
+        energy_rate = 8.50
 
         energy_charges = (
-            without_solar_units
-            * energy_rate
+            units * energy_rate
         )
 
-        wheeling_charges = (
-            without_solar_units
-            * wheeling_rate
-        )
+        # ---------------------------------
+        # FAC CHARGES
+        # ---------------------------------
+
+        fac_rate = 1.00
 
         fac_charges = (
-            without_solar_units
-            * fac_rate
+            units * fac_rate
         )
+
+        # ---------------------------------
+        # WHEELING CHARGES
+        # ---------------------------------
+
+        wheeling_rate = 0.75
+
+        wheeling_charges = (
+            units * wheeling_rate
+        )
+
+        # ---------------------------------
+        # ELECTRICITY DUTY
+        # ---------------------------------
+
+        duty_rate = 0.075
 
         electricity_duty = (
+            energy_charges * duty_rate
+        )
+
+        # ---------------------------------
+        # FIXED CHARGES
+        # ---------------------------------
+
+        fixed_charges = 5000
+
+        # ---------------------------------
+        # TOTAL BILL
+        # ---------------------------------
+
+        total_bill = (
+
             energy_charges
-            * duty_percent
-        )
-
-        grid_support_charges = 0
-
-        total_without_solar = (
-
-            demand_charges
-            + energy_charges
-            + wheeling_charges
             + fac_charges
+            + wheeling_charges
             + electricity_duty
+            + fixed_charges
 
         )
 
-        estimated_savings = (
-            total_without_solar
-            - with_solar_bill
-        )
-
         # ---------------------------------
-        # RESULTS
+        # STORE RESULTS
         # ---------------------------------
 
-        result["Demand Charges"] = round(
-            demand_charges,
+        result["Units"] = round(
+            units,
             2
         )
 
@@ -79,13 +96,13 @@ def calculate_bill_estimation(
             2
         )
 
-        result["Wheeling Charges"] = round(
-            wheeling_charges,
+        result["FAC Charges"] = round(
+            fac_charges,
             2
         )
 
-        result["FAC Charges"] = round(
-            fac_charges,
+        result["Wheeling Charges"] = round(
+            wheeling_charges,
             2
         )
 
@@ -94,18 +111,13 @@ def calculate_bill_estimation(
             2
         )
 
-        result["Grid Support Charges"] = round(
-            grid_support_charges,
+        result["Fixed Charges"] = round(
+            fixed_charges,
             2
         )
 
-        result["Without Solar Bill"] = round(
-            total_without_solar,
-            2
-        )
-
-        result["Estimated Savings"] = round(
-            estimated_savings,
+        result["Estimated Bill"] = round(
+            total_bill,
             2
         )
 
