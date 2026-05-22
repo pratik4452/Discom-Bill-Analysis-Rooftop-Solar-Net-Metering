@@ -4,22 +4,6 @@ def calculate_bill_estimation(units):
 
     try:
 
-        # ---------------------------------
-        # SAFE VALUE CONVERSION
-        # ---------------------------------
-
-        if units is None:
-            units = 0
-
-        units = (
-            str(units)
-            .replace(",", "")
-            .strip()
-        )
-
-        if units == "":
-            units = 0
-
         units = float(units)
 
         # ---------------------------------
@@ -86,10 +70,7 @@ def calculate_bill_estimation(units):
         # STORE RESULTS
         # ---------------------------------
 
-        result["Units"] = round(
-            units,
-            2
-        )
+        result["Units"] = round(units, 2)
 
         result["Energy Charges"] = round(
             energy_charges,
@@ -121,8 +102,10 @@ def calculate_bill_estimation(units):
             2
         )
 
-    except Exception as e:
+    except:
 
-        result["Error"] = str(e)
+        result["Error"] = (
+            "Tariff Calculation Error"
+        )
 
     return result
