@@ -9,20 +9,13 @@ from utils.solar_calculator import (
     calculate_without_solar
 )
 
-from utils.tariff_engine import (
-    calculate_bill_estimation
-)
-
 from utils.charts import (
-
-    create_energy_pie_chart,
-    create_bill_comparison_chart
-
+    create_bill_chart
 )
 
-# -------------------------------------
+# -----------------------------------
 # PAGE CONFIG
-# -------------------------------------
+# -----------------------------------
 
 st.set_page_config(
 
@@ -31,293 +24,230 @@ st.set_page_config(
 
 )
 
-# -------------------------------------
+# -----------------------------------
 # TITLE
-# -------------------------------------
+# -----------------------------------
 
 st.title(
     "⚡ DISCOM Bill Analysis Dashboard"
 )
 
 st.markdown(
-    "### AI-Based Rooftop Solar Savings Intelligence"
+    "### Rooftop Solar Savings Analysis"
 )
 
-# -------------------------------------
+# -----------------------------------
 # FILE UPLOAD
-# -------------------------------------
+# -----------------------------------
 
 uploaded_file = st.file_uploader(
 
-    "Upload MSEDCL Solar Bill",
+    "Upload MSEDCL Solar Bill PDF",
     type=["pdf"]
 
 )
 
-# -------------------------------------
-# PROCESS FILE
-# -------------------------------------
+# -----------------------------------
+# PROCESS BILL
+# -----------------------------------
 
 if uploaded_file:
-
-    # ---------------------------------
-    # EXTRACT DATA
-    # ---------------------------------
 
     bill_data = extract_bill_data(
         uploaded_file
     )
 
-    # ---------------------------------
-    # SOLAR CALCULATIONS
-    # ---------------------------------
-
-    solar_results = (
+    without_solar = (
         calculate_without_solar(
             bill_data
         )
     )
 
-    # ---------------------------------
-    # ESTIMATED BILL
-    # ---------------------------------
+    # -----------------------------------
+    # SUMMARY
+    # -----------------------------------
 
-    without_solar_units = (
-        solar_results.get(
-            "Without Solar Units",
-            0
-        )
+    current_bill = bill_data.get(
+        "Current Bill",
+        0
     )
 
-    estimated_bill = (
-        calculate_bill_estimation(
-            without_solar_units
-        )
+    estimated_bill = without_solar.get(
+        "Without Solar Bill",
+        0
     )
-
-    current_bill = (
-        bill_data.get(
-            "Bill Amount",
-            0
-        )
-    )
-
-    estimated_total = (
-        estimated_bill.get(
-            "Estimated Bill",
-            0
-        )
-    )
-
-    # ---------------------------------
-    # CLEAN VALUES
-    # ---------------------------------
-
-    try:
-
-        current_bill = float(
-            str(current_bill)
-            .replace(",", "")
-        )
-
-    except:
-
-        current_bill = 0
 
     savings = (
-        estimated_total - current_bill
+        estimated_bill
+        - current_bill
     )
 
-    # ---------------------------------
-    # KPI CARDS
-    # ---------------------------------
+    # -----------------------------------
+    # KPI
+    # -----------------------------------
 
     st.subheader(
-        "Key Financial Insights"
+        "Financial Summary"
     )
 
-    col1, col2, col3 = (
-        st.columns(3)
-    )
+    c1, c2, c3 = st.columns(3)
 
-    col1.metric(
-
-        "Current Bill",
+    c1.metric(
+        "With Solar Bill",
         f"₹ {current_bill:,.0f}"
-
     )
 
-    col2.metric(
-
+    c2.metric(
         "Without Solar Bill",
-        f"₹ {estimated_total:,.0f}"
-
+        f"₹ {estimated_bill:,.0f}"
     )
 
-    col3.metric(
-
+    c3.metric(
         "Estimated Savings",
         f"₹ {savings:,.0f}"
-
     )
 
-    # ---------------------------------
-    # ENERGY KPI
-    # ---------------------------------
+    # -----------------------------------
+    # SIDE BY SIDE TABLE
+    # -----------------------------------
 
     st.subheader(
-        "Energy Analytics"
+        "Tariff Comparison"
     )
 
-    col4, col5, col6 = (
-        st.columns(3)
-    )
+    comparison_df = pd.DataFrame({
 
-    col4.metric(
+        "Parameter": [
 
-        "Import Units",
+            "Demand Charges",
+            "Wheeling Charges",
+            "Energy Charges",
+            "TOD Charges",
+            "FAC Charges",
+            "Electricity Duty",
+            "Tax on Sale",
+            "Grid Support Charge",
+            "Debit Bill Adjustment"
 
-        solar_results.get(
-            "Import Units",
-            0
-        )
+        ],
 
-    )
+        "With Solar": [
 
-    col5.metric(
+            bill_data.get(
+                "Demand Charges",
+                0
+            ),
 
-        "Solar Generation",
+            bill_data.get(
+                "Wheeling Charges",
+                0
+            ),
 
-        solar_results.get(
-            "Solar Generation",
-            0
-        )
+            bill_data.get(
+                "Energy Charges",
+                0
+            ),
 
-    )
+            bill_data.get(
+                "TOD Charges",
+                0
+            ),
 
-    col6.metric(
+            bill_data.get(
+                "FAC Charges",
+                0
+            ),
 
-        "Self Consumption",
+            bill_data.get(
+                "Electricity Duty",
+                0
+            ),
 
-        solar_results.get(
-            "Self Consumption",
-            0
-        )
+            bill_data.get(
+                "Tax on Sale",
+                0
+            ),
 
-    )
+            bill_data.get(
+                "Grid Support Charge",
+                0
+            ),
 
-    # ---------------------------------
-    # CHARTS
-    # ---------------------------------
+            bill_data.get(
+                "Debit Bill Adjustment",
+                0
+            )
 
-    st.subheader(
-        "Visual Analytics"
-    )
+        ],
 
-    import_units = (
-        solar_results.get(
-            "Import Units",
-            0
-        )
-    )
+        "Without Solar": [
 
-    solar_generation = (
-        solar_results.get(
-            "Solar Generation",
-            0
-        )
-    )
+            without_solar.get(
+                "Demand Charges",
+                0
+            ),
 
-    export_units = (
-        solar_results.get(
-            "Export Units",
-            0
-        )
-    )
+            without_solar.get(
+                "Wheeling Charges",
+                0
+            ),
 
-    pie_chart = (
-        create_energy_pie_chart(
+            without_solar.get(
+                "Energy Charges",
+                0
+            ),
 
-            import_units,
-            solar_generation,
-            export_units
+            without_solar.get(
+                "TOD Charges",
+                0
+            ),
 
-        )
-    )
+            without_solar.get(
+                "FAC Charges",
+                0
+            ),
 
-    bar_chart = (
-        create_bill_comparison_chart(
+            without_solar.get(
+                "Electricity Duty",
+                0
+            ),
 
-            current_bill,
-            estimated_total
+            without_solar.get(
+                "Tax on Sale",
+                0
+            ),
 
-        )
-    )
+            without_solar.get(
+                "Grid Support Charge",
+                0
+            ),
 
-    col7, col8 = st.columns(2)
+            without_solar.get(
+                "Debit Bill Adjustment",
+                0
+            )
 
-    with col7:
+        ]
 
-        st.plotly_chart(
-            pie_chart,
-            use_container_width=True
-        )
-
-    with col8:
-
-        st.plotly_chart(
-            bar_chart,
-            use_container_width=True
-        )
-
-    # ---------------------------------
-    # RAW DATA TABLES
-    # ---------------------------------
-
-    st.subheader(
-        "Extracted Bill Details"
-    )
-
-    bill_df = pd.DataFrame(
-
-        bill_data.items(),
-        columns=["Parameter", "Value"]
-
-    )
+    })
 
     st.dataframe(
-        bill_df,
+        comparison_df,
         use_container_width=True
     )
 
-    st.subheader(
-        "Solar Calculation Details"
-    )
+    # -----------------------------------
+    # CHART
+    # -----------------------------------
 
-    solar_df = pd.DataFrame(
+    chart = create_bill_chart(
 
-        solar_results.items(),
-        columns=["Parameter", "Value"]
-
-    )
-
-    st.dataframe(
-        solar_df,
-        use_container_width=True
-    )
-
-    st.subheader(
-        "Estimated Bill Details"
-    )
-
-    estimated_df = pd.DataFrame(
-
-        estimated_bill.items(),
-        columns=["Parameter", "Value"]
+        current_bill,
+        estimated_bill
 
     )
 
-    st.dataframe(
-        estimated_df,
+    st.plotly_chart(
+        chart,
         use_container_width=True
     )
