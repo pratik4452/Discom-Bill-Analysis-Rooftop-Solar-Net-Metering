@@ -4,83 +4,102 @@ import re
 
 def extract_bill_data(pdf_file):
 
-    extracted_data = {
-        "Consumer Name": None,
-        "Bill Amount": None,
-        "Import Units": None,
-        "Export Units": None,
-        "Net Units": None,
-    }
-
     full_text = ""
 
-    # Read PDF
     with pdfplumber.open(pdf_file) as pdf:
 
         for page in pdf.pages:
+
             text = page.extract_text()
 
             if text:
                 full_text += text + "\n"
 
-    # ----------------------------
-    # CONSUMER NAME
-    # ----------------------------
+    data = {}
 
-    name_match = re.search(
-        r"Consumer Name[:\s]+([A-Za-z\s]+)",
+    # -----------------------------------
+    # CONSUMER NAME
+    # -----------------------------------
+
+    consumer_match = re.search(
+        r"Consumer Name\s*:\s*(.*)",
         full_text
     )
 
-    if name_match:
-        extracted_data["Consumer Name"] = name_match.group(1)
+    if consumer_match:
+        data["Consumer Name"] = consumer_match.group(1).strip()
 
-    # ----------------------------
+    # -----------------------------------
+    # CONSUMER NUMBER
+    # -----------------------------------
+
+    consumer_no_match = re.search(
+        r"Consumer No\.\s*:\s*(\d+)",
+        full_text
+    )
+
+    if consumer_no_match:
+        data["Consumer Number"] = consumer_no_match.group(1)
+
+    # -----------------------------------
     # BILL AMOUNT
-    # ----------------------------
+    # -----------------------------------
 
     amount_match = re.search(
-        r"Current Bill Amount[:\s₹]+([\d,\.]+)",
+        r"Total Bill Amount.*?\s([\d,]+)",
         full_text
     )
 
     if amount_match:
-        extracted_data["Bill Amount"] = amount_match.group(1)
+        data["Bill Amount"] = amount_match.group(1)
 
-    # ----------------------------
+    # -----------------------------------
     # IMPORT UNITS
-    # ----------------------------
+    # -----------------------------------
 
     import_match = re.search(
-        r"Import Units[:\s]+(\d+)",
+        r"TOTAL\s+(\d+)\s+(\d+)",
         full_text
     )
 
     if import_match:
-        extracted_data["Import Units"] = import_match.group(1)
+        data["Import Units"] = import_match.group(1)
+        data["Export Units"] = import_match.group(2)
 
-    # ----------------------------
-    # EXPORT UNITS
-    # ----------------------------
+    # -----------------------------------
+    # SOLAR GENERATION
+    # -----------------------------------
 
-    export_match = re.search(
-        r"Export Units[:\s]+(\d+)",
+    solar_match = re.search(
+        r"Total Solar Generation Units\s*:\s*(\d+)",
         full_text
     )
 
-    if export_match:
-        extracted_data["Export Units"] = export_match.group(1)
+    if solar_match:
+        data["Solar Generation"] = solar_match.group(1)
 
-    # ----------------------------
-    # NET UNITS
-    # ----------------------------
+    # -----------------------------------
+    # ADJUSTED UNITS
+    # -----------------------------------
 
-    net_match = re.search(
-        r"Net Units[:\s]+(\d+)",
+    adjusted_match = re.search(
+        r"Adjusted:\s*(\d+)",
         full_text
     )
 
-    if net_match:
-        extracted_data["Net Units"] = net_match.group(1)
+    if adjusted_match:
+        data["Adjusted Units"] = adjusted_match.group(1)
 
-    return extracted_data
+    # -----------------------------------
+    # BANKED UNITS
+    # -----------------------------------
+
+    bank_match = re.search(
+        r"Bank:\s*(\d+)",
+        full_text
+    )
+
+    if bank_match:
+        data["Banked Units"] = bank_match.group(1)
+
+    return data
