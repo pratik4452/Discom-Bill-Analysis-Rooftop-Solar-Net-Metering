@@ -3,3 +3,5 @@ pdfplumber
 pandas
 plotly
 openpyxl
+matplotlib
+tabula-py
