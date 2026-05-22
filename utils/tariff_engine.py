@@ -1,34 +1,32 @@
-def estimate_without_solar_bill(data):
+def estimate_without_solar_bill(
+
+    data,
+    solar_analysis
+
+):
 
     result = {}
 
     try:
 
-        import_units = data.get(
+        current_units = data.get(
             "Import Units",
             0
         )
 
-        solar_generation = data.get(
-            "Solar Generation",
-            0
-        )
-
-        total_units = (
-            import_units
-            + solar_generation
+        without_solar_units = (
+            solar_analysis.get(
+                "Without Solar Units",
+                0
+            )
         )
 
         multiplier = (
-            total_units
-            / import_units
+            without_solar_units
+            / current_units
         )
 
-        # ---------------------------------
-        # SCALE ALL CHARGES
-        # ---------------------------------
-
-        charge_list = [
+        charges = [
 
             "Demand Charges",
             "Wheeling Charges",
@@ -41,9 +39,9 @@ def estimate_without_solar_bill(data):
 
         ]
 
-        total_bill = 0
+        total = 0
 
-        for charge in charge_list:
+        for charge in charges:
 
             current_value = data.get(
                 charge,
@@ -60,20 +58,17 @@ def estimate_without_solar_bill(data):
                 2
             )
 
-            total_bill += estimated_value
+            total += estimated_value
 
-        result["Without Solar Units"] = (
-            round(total_units, 2)
-        )
-
-        result["Estimated Bill Without Solar"] = (
-            round(total_bill, 2)
+        result["Estimated Bill"] = round(
+            total,
+            2
         )
 
     except:
 
         result["Error"] = (
-            "Estimation Error"
+            "Bill Estimation Error"
         )
 
     return result
