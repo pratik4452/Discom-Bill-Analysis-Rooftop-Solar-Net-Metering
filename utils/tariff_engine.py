@@ -1,3 +1,17 @@
+def safe_float(value):
+
+    try:
+
+        return float(
+            str(value)
+            .replace(",", "")
+        )
+
+    except:
+
+        return 0
+
+
 def calculate_bill_estimation(
     solar_data,
     current_bill_data
@@ -8,17 +22,17 @@ def calculate_bill_estimation(
     try:
 
         # ---------------------------------
-        # INPUTS
+        # UNITS
         # ---------------------------------
 
-        import_units = float(
+        import_units = safe_float(
             solar_data.get(
                 "Import Units",
                 0
             )
         )
 
-        solar_generation = float(
+        solar_generation = safe_float(
             solar_data.get(
                 "Solar Generation",
                 0
@@ -30,28 +44,63 @@ def calculate_bill_estimation(
             + solar_generation
         )
 
-        # ---------------------------------
-        # EXISTING CHARGES
-        # ---------------------------------
+        multiplier = 1
 
-        current_energy = 440610
-        current_fac = 26102
-        current_wheeling = 42286
-        current_duty = 57289
-        current_grid = 46935
-        current_demand = 202150
+        if import_units > 0:
+
+            multiplier = (
+                without_solar_units
+                / import_units
+            )
 
         # ---------------------------------
-        # UNIT MULTIPLIER
+        # EXTRACT ACTUAL CHARGES
         # ---------------------------------
 
-        multiplier = (
-            without_solar_units
-            / import_units
+        current_energy = safe_float(
+            current_bill_data.get(
+                "Energy Charges",
+                0
+            )
+        )
+
+        current_fac = safe_float(
+            current_bill_data.get(
+                "FAC Charges",
+                0
+            )
+        )
+
+        current_wheeling = safe_float(
+            current_bill_data.get(
+                "Wheeling Charges",
+                0
+            )
+        )
+
+        current_duty = safe_float(
+            current_bill_data.get(
+                "Electricity Duty",
+                0
+            )
+        )
+
+        current_grid = safe_float(
+            current_bill_data.get(
+                "Grid Support Charges",
+                0
+            )
+        )
+
+        current_demand = safe_float(
+            current_bill_data.get(
+                "Demand Charges",
+                0
+            )
         )
 
         # ---------------------------------
-        # WITHOUT SOLAR CHARGES
+        # WITHOUT SOLAR
         # ---------------------------------
 
         without_energy = (
@@ -74,10 +123,8 @@ def calculate_bill_estimation(
             * multiplier
         )
 
-        # Grid support removed
         without_grid = 0
 
-        # Demand same
         without_demand = (
             current_demand
         )
@@ -114,7 +161,7 @@ def calculate_bill_estimation(
         )
 
         # ---------------------------------
-        # STORE RESULTS
+        # RESULT TABLE
         # ---------------------------------
 
         result = {
@@ -204,7 +251,7 @@ def calculate_bill_estimation(
 
         result = {
             "Error":
-            "Tariff Calculation Error"
+            "Calculation Error"
         }
 
     return result
